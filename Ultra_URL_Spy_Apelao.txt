@@ -1,0 +1,378 @@
+--[[
+ULTRA APELÃO URL / LINK SPY
+• Anti-reset GUI
+• Hooks HttpGet / HttpGetAsync / request
+• Live Spy
+• Deep Scan (base64, hex, string.char, concat)
+• Risk classifier
+• Persistent runtime capture
+]]
+
+if getgenv().ExecutorFixLoaded then return end
+getgenv().ExecutorFixLoaded = true
+
+-- =========================
+-- SERVICES / PLAYER
+-- =========================
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+
+getgenv().CapturedURLs = getgenv().CapturedURLs or {}
+getgenv().LiveSpy = getgenv().LiveSpy or {}
+
+-- =========================
+-- ANTI RESET GUI PROTECTION
+-- =========================
+local ProtectedGuis = {}
+
+local function protectGui(gui)
+	gui.ResetOnSpawn = false
+	table.insert(ProtectedGuis, gui)
+end
+
+local function reattachGuis()
+	local pg = Player:WaitForChild("PlayerGui")
+	for _,gui in ipairs(ProtectedGuis) do
+		if gui and gui.Parent ~= pg then
+			gui.Parent = pg
+		end
+	end
+end
+
+Player.CharacterAdded:Connect(function()
+	task.wait(0.5)
+	reattachGuis()
+end)
+
+-- =========================
+-- DRAG SYSTEM
+-- =========================
+local function makeDraggable(frame, handle)
+	handle = handle or frame
+	frame.Active = true
+	handle.Active = true
+
+	local dragging = false
+	local dragStart, startPos
+
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+		end
+	end)
+
+	handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+
+	handle.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+-- =========================
+-- LIVE LOGGER
+-- =========================
+local function logLive(url, src)
+	table.insert(getgenv().LiveSpy, os.date("%X").." ["..src.."] "..url)
+	table.insert(getgenv().CapturedURLs, url)
+end
+
+-- =========================
+-- HOOKS
+-- =========================
+local oldHttpGet
+oldHttpGet = hookfunction(game.HttpGet, function(self, url, ...)
+	if typeof(url) == "string" then
+		logLive(url,"HttpGet")
+	end
+	return oldHttpGet(self, url, ...)
+end)
+
+if game.HttpGetAsync then
+	local oldAsync
+	oldAsync = hookfunction(game.HttpGetAsync, function(self, url, ...)
+		if typeof(url) == "string" then
+			logLive(url,"HttpGetAsync")
+		end
+		return oldAsync(self, url, ...)
+	end)
+end
+
+local function hookRequest(tbl)
+	local old = tbl.request or tbl.Request
+	if old then
+		tbl.request = function(data)
+			if type(data) == "table" and type(data.Url) == "string" then
+				logLive(data.Url,"request")
+			end
+			return old(data)
+		end
+	end
+end
+
+pcall(function()
+	if syn then hookRequest(syn) end
+	if http then hookRequest(http) end
+end)
+
+-- =========================
+-- DECODERS
+-- =========================
+local function tryBase64(str)
+	local ok, res = pcall(function()
+		return HttpService:Base64Decode(str)
+	end)
+	if ok and res and res:find("http") then
+		return res
+	end
+end
+
+local function decodeHex(str)
+	return (str:gsub("\\x(%x%x)", function(h)
+		return string.char(tonumber(h,16))
+	end))
+end
+
+local function decodeChar(str)
+	local nums = {}
+	for n in str:gmatch("char%(([%d,%s]+)%)") do
+		for num in n:gmatch("%d+") do
+			table.insert(nums, tonumber(num))
+		end
+	end
+	if #nums > 0 then
+		local s=""
+		for _,v in ipairs(nums) do
+			s..=string.char(v)
+		end
+		return s
+	end
+end
+
+-- =========================
+-- RISK CLASSIFIER
+-- =========================
+local function classify(url)
+	url = url:lower()
+	if url:find("discord") or url:find("webhook") then
+		return "🔴 PERIGOSO"
+	elseif url:find("paste") or url:find("anon") then
+		return "🟡 SUSPEITO"
+	elseif url:find("github") or url:find("raw") then
+		return "🟢 SAFE"
+	end
+	return "🟡 SUSPEITO"
+end
+
+-- =========================
+-- DEEP SCAN ULTRA
+-- =========================
+local function deepScan(text)
+	local found = {}
+
+	local function add(v)
+		if v and #v > 5 then
+			found[v] = classify(v)
+		end
+	end
+
+	for url in text:gmatch("https?://[%w%p]+") do
+		add(url)
+	end
+
+	for str in text:gmatch([["(.-)"]]) do
+		for url in str:gmatch("https?://[%w%p]+") do
+			add(url)
+		end
+		add(tryBase64(str))
+		add(decodeHex(str))
+	end
+
+	add(decodeChar(text))
+
+	local joined=""
+	for s in text:gmatch([["(.-)"]]) do
+		joined..=s
+	end
+	for url in joined:gmatch("https?://[%w%p]+") do
+		add(url)
+	end
+
+	for _,v in ipairs(getgenv().CapturedURLs) do
+		add(v)
+	end
+
+	local result={}
+	for k,risk in pairs(found) do
+		table.insert(result, "["..risk.."] "..k)
+	end
+	return result
+end
+
+-- =========================
+-- GUI CONTROLS
+-- =========================
+local function addWindowControls(gui, mainFrame)
+	local TopBar = Instance.new("Frame", mainFrame)
+	TopBar.Size = UDim2.new(1,0,0,30)
+	TopBar.BackgroundTransparency = 1
+	makeDraggable(mainFrame, TopBar)
+
+	local Close = Instance.new("TextButton", TopBar)
+	Close.Text = "X"
+	Close.Size = UDim2.new(0,30,0,30)
+	Close.Position = UDim2.new(1,-35,0,0)
+	Close.BackgroundTransparency = 1
+	Close.TextColor3 = Color3.new(1,0.3,0.3)
+	Close.Font = Enum.Font.GothamBold
+	Close.TextSize = 16
+
+	local Min = Instance.new("TextButton", TopBar)
+	Min.Text = "-"
+	Min.Size = UDim2.new(0,30,0,30)
+	Min.Position = UDim2.new(1,-70,0,0)
+	Min.BackgroundTransparency = 1
+	Min.TextColor3 = Color3.new(1,1,1)
+	Min.Font = Enum.Font.GothamBold
+	Min.TextSize = 18
+
+	local MiniBar = Instance.new("TextButton", gui)
+	MiniBar.Size = UDim2.new(0,220,0,30)
+	MiniBar.Position = UDim2.new(0.5,-110,0,20)
+	MiniBar.Text = "Abrir Spy"
+	MiniBar.Visible = false
+	MiniBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	MiniBar.TextColor3 = Color3.new(1,1,1)
+	MiniBar.BorderSizePixel = 0
+	MiniBar.Active = true
+	Instance.new("UICorner", MiniBar).CornerRadius = UDim.new(0,8)
+
+	makeDraggable(MiniBar)
+
+	Close.MouseButton1Click:Connect(function()
+		gui:Destroy()
+	end)
+
+	Min.MouseButton1Click:Connect(function()
+		mainFrame.Visible = false
+		MiniBar.Visible = true
+	end)
+
+	MiniBar.MouseButton1Click:Connect(function()
+		mainFrame.Visible = true
+		MiniBar.Visible = false
+	end)
+end
+
+-- =========================
+-- MAIN GUI
+-- =========================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "UltraURLSpy"
+ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+protectGui(ScreenGui)
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Position = UDim2.fromScale(0.1,0.1)
+Main.Size = UDim2.fromScale(0.8,0.6)
+Main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,12)
+
+addWindowControls(ScreenGui, Main)
+
+local TextBox = Instance.new("TextBox", Main)
+TextBox.Position = UDim2.new(0,10,0,50)
+TextBox.Size = UDim2.new(1,-20,1,-120)
+TextBox.MultiLine = true
+TextBox.ClearTextOnFocus = false
+TextBox.TextWrapped = true
+TextBox.TextYAlignment = Enum.TextYAlignment.Top
+TextBox.Font = Enum.Font.Code
+TextBox.TextSize = 14
+TextBox.TextColor3 = Color3.new(1,1,1)
+TextBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+TextBox.BorderSizePixel = 0
+TextBox.Text = "-- Cole o script aqui"
+Instance.new("UICorner", TextBox)
+
+local Execute = Instance.new("TextButton", Main)
+Execute.Size = UDim2.new(1,-20,0,40)
+Execute.Position = UDim2.new(0,10,1,-50)
+Execute.Text = "EXECUTAR + SPY"
+Execute.Font = Enum.Font.GothamBold
+Execute.TextSize = 16
+Execute.TextColor3 = Color3.new(1,1,1)
+Execute.BackgroundColor3 = Color3.fromRGB(0,170,255)
+Instance.new("UICorner", Execute)
+
+-- =========================
+-- SHOW URLS GUI
+-- =========================
+local function ShowURLs(list)
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "URLs_"..tick()
+	gui.Parent = Player.PlayerGui
+	protectGui(gui)
+
+	local frame = Instance.new("Frame", gui)
+	frame.Position = UDim2.fromScale(0.15,0.15)
+	frame.Size = UDim2.fromScale(0.7,0.6)
+	frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+	Instance.new("UICorner", frame)
+
+	addWindowControls(gui, frame)
+
+	local box = Instance.new("TextBox", frame)
+	box.Position = UDim2.new(0,10,0,40)
+	box.Size = UDim2.new(1,-20,1,-50)
+	box.MultiLine = true
+	box.ClearTextOnFocus = false
+	box.TextWrapped = true
+	box.TextYAlignment = Enum.TextYAlignment.Top
+	box.Font = Enum.Font.Code
+	box.TextSize = 14
+	box.RichText = true
+	box.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	box.Text = ""
+
+	for i,v in ipairs(list) do
+		if v:find("🔴") then
+			box.Text ..= "<font color='rgb(255,80,80)'>["..i.."] "..v.."</font>\n\n"
+		elseif v:find("🟡") then
+			box.Text ..= "<font color='rgb(255,200,80)'>["..i.."] "..v.."</font>\n\n"
+		else
+			box.Text ..= "<font color='rgb(80,200,255)'>["..i.."] "..v.."</font>\n\n"
+		end
+	end
+end
+
+-- =========================
+-- EXECUTE
+-- =========================
+Execute.MouseButton1Click:Connect(function()
+	table.clear(getgenv().CapturedURLs)
+
+	local code = TextBox.Text
+	local f = loadstring(code)
+	if f then pcall(f) end
+
+	task.wait(2)
+
+	local all = deepScan(code)
+	ShowURLs(all)
+end)
