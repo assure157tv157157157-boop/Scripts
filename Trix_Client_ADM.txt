@@ -10,7 +10,7 @@ local Workspace = workspace
 --// Donos especiais (sempre recebem "Dono")
 local Donos = {
     ["Barrettmariah2"] = true,
-    [""] = true,
+    ["itz_pedro7229"] = true,
     [""] = true,
     [""] = true
 }
