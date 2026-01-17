@@ -1,0 +1,165 @@
+--// SERVICES
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+local plr = Players.LocalPlayer
+local character = plr.Character or plr.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+plr.CharacterAdded:Connect(function(char)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+end)
+
+--// UI LIB
+local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/Davi999z/ca0ed84b556f44cd35acc4668b299ca7/raw/45b254fcedf2a576930917c41610df7bb8db8f92/gistfile1.txt"))()
+
+local Window = Library:MakeWindow({
+    Title = "Spectra hub | Brookhaven RP 🏡",
+    SubTitle = "by: assure_TV",
+    LoadText = "Carregando Spectra",
+    Flags = "Spectrahub_Brookhaven"
+})
+
+Window:AddMinimizeButton({
+    Button = { Image = "rbxassetid://74457342844346", BackgroundTransparency = 0 },
+    Corner = { CornerRadius = UDim.new(35, 1) }
+})
+
+
+
+--////////////////////////////////////////////////////
+--// TAB FE
+local FETab = Window:MakeTab({
+    Title = "FE",
+    Icon = "rbxassetid://77340534951945"
+})
+
+FETab:AddSection({ "FE Scripts" })
+
+FETab:AddButton({
+    Name = "Naruto",
+    Desc = "Naruto FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mxskf/Legal/refs/heads/main/Dboas"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Batman",
+    Desc = "Batman FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mxskf/Legal/refs/heads/main/Dboas89"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Sonic.Exe",
+    Desc = "Sonic.Exe FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mxskf/Legal/refs/heads/main/Dboas86"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Panico",
+    Desc = "Pânico FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/yyyyyyyface/refs/heads/main/Main.txt"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Morty",
+    Desc = "Morty FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/repositoryredzlib/Mortyyyyyy/refs/heads/main/Main.txt"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Rick Sanchez",
+    Desc = "Rick Sanchez FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/rick-Sanchez-/refs/heads/main/Main.txt"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Cowboy",
+    Desc = "Cowboy FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/wjsj/refs/heads/main/Main.txt"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Guest666",
+    Desc = "Guest666 FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/lyrarepositorio-afk/swsw/refs/heads/main/Main.txt"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Camera de Carro",
+    Desc = "Carro FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/repositoryredzlib/Carfling/refs/heads/main/Main.txt"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "FE VR",
+    Desc = "FE VR",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local noobArms = {84451219120140, 72292903231768}
+
+        for _, id in ipairs(noobArms) do
+            pcall(function()
+                ReplicatedStorage.Remotes.Wear:InvokeServer(id)
+            end)
+        end
+
+        task.delay(6, function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/randomstring0/Qwerty/refs/heads/main/qwerty45.lua"))()
+        end)
+    end
+})
+
+FETab:AddButton({
+    Name = "Obito",
+    Desc = "Obito FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://cdn.authguard.org/virtual-file/c47b8a12ca6c4cef840280dafd893e7d"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Shadow",
+    Desc = "Shadow FE",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/267266273ffsfs/Shadow/refs/heads/main/Main.txt"))()
+        end)
+    end
+})
+
+FETab:AddButton({
+    Name = "Herobrine",
+    Desc = "Herobrine FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/lyrarepositorio-afk/hEROBRINE/refs/heads/main/Main.txt"))()
+    end
+})
+
+FETab:AddButton({
+    Name = "Jeff The Killer",
+    Desc = "Jeff The Killer FE",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/267266273ffsfs/Jeff/refs/heads/main/Main.txt"))()
+    end
+})
