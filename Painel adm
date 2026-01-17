@@ -1,165 +1,313 @@
+--------------------------------------------------
 --// SERVICES
+--------------------------------------------------
 local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
-local plr = Players.LocalPlayer
-local character = plr.Character or plr.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+local LocalPlayer = Players.LocalPlayer
 
-plr.CharacterAdded:Connect(function(char)
-    character = char
-    humanoid = char:WaitForChild("Humanoid")
+--------------------------------------------------
+--// LOAD WINDUI
+--------------------------------------------------
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+--------------------------------------------------
+--// WINDOW
+--------------------------------------------------
+local Window = WindUI:CreateWindow({
+    Title = "Spectra_admin",
+    Icon = "rbxassetid://77070387164904",
+    Author = "by assure_TV",
+    Folder = "StelariumXS",
+    Size = UDim2.fromOffset(580,460),
+    Theme = "Dark",
+    SideBarWidth = 200,
+    Background = "rbxassetid://17698154602"
+})
+
+local Tab = Window:Tab({
+    Title = "Comandos",
+    Icon = "terminal"
+})
+
+--------------------------------------------------
+--// UTILS
+--------------------------------------------------
+local SelectedPlayer = nil
+
+local function GetPlayerNames()
+    local list = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(list, plr.Name)
+        end
+    end
+    return list
+end
+
+local function SendChat(msg)
+    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        TextChatService.TextChannels.RBXGeneral:SendAsync(msg)
+    else
+        ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg,"All")
+    end
+end
+
+--------------------------------------------------
+--// SECTION COMANDOS
+--------------------------------------------------
+local CommandSection = Tab:Section({
+    Title = "Comandos Spectra",
+    Icon = "user-cog",
+    Opened = true
+})
+
+local PlayerDropdown = CommandSection:Dropdown({
+    Title = "Selecionar Jogador",
+    Values = GetPlayerNames(),
+    Callback = function(value)
+        SelectedPlayer = value
+    end
+})
+
+local function RefreshPlayers()
+    PlayerDropdown:Refresh(GetPlayerNames())
+end
+
+Players.PlayerAdded:Connect(RefreshPlayers)
+Players.PlayerRemoving:Connect(RefreshPlayers)
+
+local function CmdButton(title, cmd)
+    CommandSection:Button({
+        Title = title,
+        Callback = function()
+            if SelectedPlayer then
+                SendChat(cmd .. " " .. SelectedPlayer)
+            end
+        end
+    })
+end
+
+CmdButton("Kill", ";kill")
+CmdButton("Fling", ";fling")
+CmdButton("Fling OP", ";flingop")
+CmdButton("Jail", ";jail")
+CmdButton("Unjail", ";unjail")
+CmdButton("Frozen", ";frozen")
+CmdButton("Unfrozen", ";unfrozen")
+CmdButton("Bomb", ";bomb")
+CmdButton("Float", ";float")
+
+--------------------------------------------------
+--// SECTION VERIFIQUE (ADICIONADO)
+--------------------------------------------------
+local VerifySection = Tab:Section({
+    Title = "Verificação Spectra",
+    Icon = "shield-check",
+    Opened = true
+})
+
+VerifySection:Button({
+    Title = "verifique",
+    Callback = function()
+        SendChat(";verifique")
+    end
+})
+
+--------------------------------------------------
+--// ACTION HELPERS
+--------------------------------------------------
+local function Char()
+    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
+
+local function Humanoid()
+    return Char():WaitForChild("Humanoid")
+end
+
+local function HRP()
+    return Char():WaitForChild("HumanoidRootPart")
+end
+
+--------------------------------------------------
+--// ACTIONS
+--------------------------------------------------
+local JailModel
+local Floating = false
+local FloatConn
+
+local function StartFloat()
+    if Floating then return end
+    Floating = true
+    Humanoid().WalkSpeed = 0
+    Humanoid().JumpPower = 0
+
+    FloatConn = RunService.Heartbeat:Connect(function()
+        HRP().AssemblyLinearVelocity = Vector3.new(0,20,0)
+    end)
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+    Floating = false
+    if FloatConn then
+        FloatConn:Disconnect()
+        FloatConn = nil
+    end
 end)
 
---// UI LIB
-local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/Davi999z/ca0ed84b556f44cd35acc4668b299ca7/raw/45b254fcedf2a576930917c41610df7bb8db8f92/gistfile1.txt"))()
+local Actions = {
+    [";kill"] = function() Humanoid().Health = 0 end,
+    [";fling"] = function() HRP().Velocity = Vector3.new(6000,300,6000) end,
+    [";flingop"] = function() HRP().Velocity = Vector3.new(0,150000,0) end,
 
-local Window = Library:MakeWindow({
-    Title = "Spectra hub | Brookhaven RP 🏡",
-    SubTitle = "by: assure_TV",
-    LoadText = "Carregando Spectra",
-    Flags = "Spectrahub_Brookhaven"
-})
+    [";jail"] = function()
+        if JailModel then return end
+        JailModel = Instance.new("Model", Workspace)
+        JailModel.Name = "SpectraJail"
+        local base = HRP().CFrame
 
-Window:AddMinimizeButton({
-    Button = { Image = "rbxassetid://74457342844346", BackgroundTransparency = 0 },
-    Corner = { CornerRadius = UDim.new(35, 1) }
-})
-
-
-
---////////////////////////////////////////////////////
---// TAB FE
-local FETab = Window:MakeTab({
-    Title = "FE",
-    Icon = "rbxassetid://77340534951945"
-})
-
-FETab:AddSection({ "FE Scripts" })
-
-FETab:AddButton({
-    Name = "Naruto",
-    Desc = "Naruto FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/mxskf/Legal/refs/heads/main/Dboas"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Batman",
-    Desc = "Batman FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/mxskf/Legal/refs/heads/main/Dboas89"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Sonic.Exe",
-    Desc = "Sonic.Exe FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/mxskf/Legal/refs/heads/main/Dboas86"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Panico",
-    Desc = "Pânico FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/yyyyyyyface/refs/heads/main/Main.txt"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Morty",
-    Desc = "Morty FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/repositoryredzlib/Mortyyyyyy/refs/heads/main/Main.txt"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Rick Sanchez",
-    Desc = "Rick Sanchez FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/rick-Sanchez-/refs/heads/main/Main.txt"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Cowboy",
-    Desc = "Cowboy FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/wjsj/refs/heads/main/Main.txt"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Guest666",
-    Desc = "Guest666 FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/lyrarepositorio-afk/swsw/refs/heads/main/Main.txt"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Camera de Carro",
-    Desc = "Carro FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/repositoryredzlib/Carfling/refs/heads/main/Main.txt"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "FE VR",
-    Desc = "FE VR",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local noobArms = {84451219120140, 72292903231768}
-
-        for _, id in ipairs(noobArms) do
-            pcall(function()
-                ReplicatedStorage.Remotes.Wear:InvokeServer(id)
-            end)
+        local function wall(size, offset)
+            local p = Instance.new("Part")
+            p.Anchored = true
+            p.CanCollide = true
+            p.Size = size
+            p.Transparency = 0.35
+            p.Color = Color3.fromRGB(0,0,0)
+            p.CFrame = base * offset
+            p.Parent = JailModel
         end
 
-        task.delay(6, function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/randomstring0/Qwerty/refs/heads/main/qwerty45.lua"))()
+        wall(Vector3.new(14,10,1), CFrame.new(0,0,6.5))
+        wall(Vector3.new(14,10,1), CFrame.new(0,0,-6.5))
+        wall(Vector3.new(1,10,14), CFrame.new(6.5,0,0))
+        wall(Vector3.new(1,10,14), CFrame.new(-6.5,0,0))
+        wall(Vector3.new(14,1,14), CFrame.new(0,-5,0))
+        wall(Vector3.new(14,1,14), CFrame.new(0,5,0))
+    end,
+
+    [";unjail"] = function()
+        if JailModel then JailModel:Destroy() JailModel = nil end
+    end,
+
+    [";frozen"] = function()
+        HRP().Anchored = true
+        Humanoid().WalkSpeed = 0
+        Humanoid().JumpPower = 0
+    end,
+
+    [";unfrozen"] = function()
+        HRP().Anchored = false
+        Humanoid().WalkSpeed = 16
+        Humanoid().JumpPower = 50
+    end,
+
+    [";bomb"] = function()
+        local e = Instance.new("Explosion")
+        e.Position = HRP().Position
+        e.BlastRadius = 20
+        e.Parent = Workspace
+        Humanoid().Health = 0
+    end,
+
+    [";float"] = function()
+        StartFloat()
+    end
+}
+
+--------------------------------------------------
+--// TAG SYSTEM (VERMELHO)
+--------------------------------------------------
+local Tagged = {}
+
+local function criarTag(head)
+    if head:FindFirstChild("SpectraTag") then return end
+
+    local gui = Instance.new("BillboardGui", head)
+    gui.Name = "SpectraTag"
+    gui.Size = UDim2.new(0,150,0,36)
+    gui.StudsOffset = Vector3.new(0,2.8,0)
+    gui.AlwaysOnTop = true
+
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(1,0,1,0)
+    frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    frame.BackgroundTransparency = 0.25
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,14)
+
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Color = Color3.fromRGB(255,0,0)
+    stroke.Thickness = 2
+
+    local txt = Instance.new("TextLabel", frame)
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = "user Spectra\nscripts e"
+    txt.TextColor3 = Color3.fromRGB(255,255,255)
+    txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBold
+end
+
+local function garantirTag(player)
+    if Tagged[player.UserId] then return end
+    Tagged[player.UserId] = true
+
+    local function apply(char)
+        local head = char:WaitForChild("Head",10)
+        if head then criarTag(head) end
+    end
+
+    if player.Character then apply(player.Character) end
+    player.CharacterAdded:Connect(apply)
+end
+
+--------------------------------------------------
+--// CHAT LISTENER + VERIFIQUE
+--------------------------------------------------
+local estouVerificando = false
+
+local function OnMessage(text, speaker)
+    if not text then return end
+    local msg = string.lower(text)
+    local myName = string.lower(LocalPlayer.Name)
+
+    for cmd, action in pairs(Actions) do
+        if msg == cmd .. " " .. myName then
+            action()
+        end
+    end
+
+    if msg == ";verifique" and speaker == LocalPlayer then
+        estouVerificando = true
+        return
+    end
+
+    if msg == ";verifique" and speaker ~= LocalPlayer then
+        SendChat("spectra_###")
+        return
+    end
+
+    if estouVerificando and msg == "spectra_###" and speaker then
+        garantirTag(speaker)
+    end
+end
+
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+    TextChatService.TextChannels.RBXGeneral.OnIncomingMessage = function(m)
+        local speaker
+        if m.TextSource then
+            speaker = Players:GetPlayerByUserId(m.TextSource.UserId)
+        end
+        OnMessage(m.Text, speaker)
+    end
+else
+    for _, p in ipairs(Players:GetPlayers()) do
+        p.Chatted:Connect(function(msg)
+            OnMessage(msg, p)
         end)
     end
-})
-
-FETab:AddButton({
-    Name = "Obito",
-    Desc = "Obito FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://cdn.authguard.org/virtual-file/c47b8a12ca6c4cef840280dafd893e7d"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Shadow",
-    Desc = "Shadow FE",
-    Callback = function()
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/267266273ffsfs/Shadow/refs/heads/main/Main.txt"))()
-        end)
-    end
-})
-
-FETab:AddButton({
-    Name = "Herobrine",
-    Desc = "Herobrine FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/lyrarepositorio-afk/hEROBRINE/refs/heads/main/Main.txt"))()
-    end
-})
-
-FETab:AddButton({
-    Name = "Jeff The Killer",
-    Desc = "Jeff The Killer FE",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/267266273ffsfs/Jeff/refs/heads/main/Main.txt"))()
-    end
-})
+end
