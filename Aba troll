@@ -39,7 +39,37 @@ local TrollTab = Window:MakeTab({
 
 
 
-local Section = Tab9:AddSection({"Kill"})
+--////////////////////////////////////////////////////
+--// PLAYER LIST
+local selectedPlayer
+
+local function getPlayers()
+    local t = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= plr then
+            table.insert(t, p.Name)
+        end
+    end
+    return t
+end
+
+local dropdown = TrollTab:AddDropdown({
+    Name = "Escolher Player",
+    Options = getPlayers(),
+    Callback = function(v)
+        selectedPlayer = v
+    end
+})
+
+TrollTab:AddButton({
+    Name = "Atualizar Lista",
+    Callback = function()
+        dropdown:Set(getPlayers())
+    end
+})
+
+
+local Section = TrollTab:AddSection({"Kill"})
 
 local DropdownKillPullMethod = TrollTab:AddDropdown({
     Name = "Selecionar MÃ©todo (Matar/Puxar)",
