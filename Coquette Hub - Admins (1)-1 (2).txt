@@ -10,7 +10,7 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 -- 🚨 Configuração de Donos e Moderadores
 local DONOS = {
-    ["mxordz"] = true,
+    ["itz_pedro7229"] = true,
     ["jifhgiu"] = true,
     ["cartolahub7"] = true,
     ["ppyszt"] = true,
@@ -1335,4 +1335,5 @@ if IsAutorizado(LocalPlayer.Name) then
 end
 
 end
+
 
