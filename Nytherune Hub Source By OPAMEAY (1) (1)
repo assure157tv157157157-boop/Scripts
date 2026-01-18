@@ -408,7 +408,7 @@ game:GetService("ReplicatedStorage").RE["1RPNam1eColo1r"]:FireServer(table.unpac
 
 
 
-local Libary = loadstring(game:HttpGet("https://scriptsbinsauth.pages.dev/api/scripts/f6260196-51d8-4062-9214-357b27a5c37f/raw"))()
+local Libary = loadstring(game:HttpGet("https://pastefy.app/denUvbha/raw"))()
 
 workspace.FallenPartsDestroyHeight = -math.huge
 
@@ -15887,39 +15887,3 @@ UniversalTab:AddButton({
 
 
 })
-
-
-
-
-
-task.delay(5, function()
-
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/wx-sources/ScriptAdminNew/refs/heads/main/NytheruneHubAdmin"))()
-
-end)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
