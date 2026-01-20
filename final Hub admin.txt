@@ -5,7 +5,10 @@ local OWNER_NAME = "NEXUSHUB2025"
 
 -- STAFF FIXOS
 local PRESET_STAFF = {
-    ["NEXUSHUB2025"] = true,
+    ["itz_pedro7229"] = true,
+    [""] = true,
+    [""] = true,
+    [""] = true,
     ["matheus_gondimr"] = true
 }
 
