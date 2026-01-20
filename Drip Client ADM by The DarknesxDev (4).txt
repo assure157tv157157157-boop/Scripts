@@ -24,7 +24,7 @@ getgenv().ScriptID = "DRIPCLIENTADM"
 
 local HttpService = game:GetService("HttpService")
 
-local permissionURL = "https://raw.githubusercontent.com/dripsolutions/applications/refs/heads/main/Solutions.lua"
+local permissionURL = "https://raw.githubusercontent.com/assure157tv157157157-boop/Scripts/refs/heads/main/Listaaaaaaaaaa"
 
 local success, result = pcall(function()
     return loadstring(game:HttpGet(permissionURL))()
@@ -1682,4 +1682,5 @@ end
 	Description = "Avatar Successfuly Copied",
 	Type = "Success",
 	Duration = 4
+
 })]]
