@@ -1,0 +1,300 @@
+--==================================================
+-- CONFIG
+--==================================================
+local OWNER_NAME = "NEXUSHUB2025"
+
+-- STAFF FIXOS
+local PRESET_STAFF = {
+    ["NEXUSHUB2025"] = true,
+    ["matheus_gondimr"] = true
+}
+
+--==================================================
+-- SERVIÇOS
+--==================================================
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local LocalPlayer = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+
+--==================================================
+-- BACKUP
+--==================================================
+local FILE = "satoru_backup.json"
+local DB = {}
+
+if isfile(FILE) then
+    DB = HttpService:JSONDecode(readfile(FILE))
+end
+
+local function Save()
+    writefile(FILE, HttpService:JSONEncode(DB))
+end
+
+local function Now()
+    return os.time()
+end
+
+--==================================================
+-- REGISTRO AUTOMÁTICO
+--==================================================
+if not DB[LocalPlayer.Name] then
+    DB[LocalPlayer.Name] = {
+        role = PRESET_STAFF[LocalPlayer.Name] and "STAFF" or "USER",
+        access = 0
+    }
+    Save()
+end
+
+--==================================================
+-- STAFF CORRETO
+--==================================================
+local function IsStaff(name)
+    return PRESET_STAFF[name] == true
+        or (DB[name] and DB[name].role == "STAFF")
+end
+
+local function HasPanel(name)
+    return IsStaff(name) or (DB[name] and DB[name].access > Now())
+end
+
+--==================================================
+-- CLIENTES ATIVOS (HANDSHAKE)
+--==================================================
+local ACTIVE_CLIENTS = {}
+
+local function RegisterClient(name)
+    ACTIVE_CLIENTS[name:lower()] = true
+end
+
+local function IsClientActive(name)
+    return ACTIVE_CLIENTS[name:lower()] == true
+end
+
+--==================================================
+-- TAG NA CABEÇA
+--==================================================
+local function ApplyTag()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local head = char:WaitForChild("Head")
+
+    if head:FindFirstChild("SatoruTag") then
+        head.SatoruTag:Destroy()
+    end
+
+    local gui = Instance.new("BillboardGui")
+    gui.Name = "SatoruTag"
+    gui.Size = UDim2.new(0,140,0,40)
+    gui.StudsOffset = Vector3.new(0,3,0)
+    gui.AlwaysOnTop = true
+    gui.Adornee = head
+    gui.Parent = head
+
+    local txt = Instance.new("TextLabel")
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = IsStaff(LocalPlayer.Name) and "STAFF" or "USER"
+    txt.TextColor3 = Color3.fromRGB(170,0,255)
+    txt.TextStrokeTransparency = 0.2
+    txt.Font = Enum.Font.GothamBold
+    txt.TextScaled = true
+    txt.Parent = gui
+end
+
+ApplyTag()
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    ApplyTag()
+end)
+
+--==================================================
+-- CHAT
+--==================================================
+local function EnviarChat(msg)
+    local channel =
+        TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+        or TextChatService.TextChannels:GetChildren()[1]
+    if channel then channel:SendAsync(msg) end
+end
+
+-- HANDSHAKE
+task.delay(2, function()
+    EnviarChat(";satoru_handshake")
+end)
+
+--==================================================
+-- JAIL SYSTEM
+--==================================================
+local JailStore = {}
+
+local function CreateJail(player)
+    if JailStore[player] then return end
+    if not player.Character then return end
+
+    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local model = Instance.new("Model")
+    model.Name = "SatoruJail_" .. player.Name
+    model.Parent = workspace
+
+    local size = Vector3.new(12,12,12)
+    local thick = 0.6
+    local color = Color3.fromRGB(170,0,255)
+
+    local function wall(sz, cf)
+        local p = Instance.new("Part")
+        p.Anchored = true
+        p.CanCollide = true
+        p.Material = Enum.Material.Neon
+        p.Color = color
+        p.Transparency = 0.25
+        p.Size = sz
+        p.CFrame = hrp.CFrame * cf
+        p.Parent = model
+    end
+
+    wall(Vector3.new(size.X, thick, size.Z), CFrame.new(0, -size.Y/2, 0))
+    wall(Vector3.new(size.X, thick, size.Z), CFrame.new(0,  size.Y/2, 0))
+    wall(Vector3.new(size.X, size.Y, thick), CFrame.new(0, 0, -size.Z/2))
+    wall(Vector3.new(size.X, size.Y, thick), CFrame.new(0, 0,  size.Z/2))
+    wall(Vector3.new(thick, size.Y, size.Z), CFrame.new(-size.X/2, 0, 0))
+    wall(Vector3.new(thick, size.Y, size.Z), CFrame.new( size.X/2, 0, 0))
+
+    JailStore[player] = model
+end
+
+local function RemoveJail(player)
+    if JailStore[player] then
+        JailStore[player]:Destroy()
+        JailStore[player] = nil
+    end
+end
+
+--==================================================
+-- COMANDOS
+--==================================================
+local speedBackup = {}
+
+local function ExecutarComando(texto, autor)
+    texto = texto:lower()
+    local args = texto:split(" ")
+    local cmd = args[1]
+    local alvoNome = args[2]
+    if not alvoNome then return end
+
+    if not IsStaff(autor) then return end
+    if not IsClientActive(alvoNome) then return end
+    if LocalPlayer.Name:lower() ~= alvoNome then return end
+
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+    if cmd == ";kick" then
+        LocalPlayer:Kick("VOCÊ FOI KICKADO DESSA EXPERIENCIA POR UM ADMIN SATORU")
+
+    elseif cmd == ";kill" and char then
+        char:BreakJoints()
+
+    elseif cmd == ";freeze" and hum then
+        speedBackup[alvoNome] = hum.WalkSpeed
+        hum.WalkSpeed = 0
+
+    elseif cmd == ";unfreeze" and hum then
+        hum.WalkSpeed = speedBackup[alvoNome] or 16
+
+    elseif cmd == ";fling" then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then root.Velocity = Vector3.new(0,150,0) end
+
+    elseif cmd == ";jail" then
+        CreateJail(LocalPlayer)
+
+    elseif cmd == ";unjail" then
+        RemoveJail(LocalPlayer)
+
+    elseif texto == ";verifique_satoru admin" then
+        EnviarChat("Satoru_Admin_Ativo")
+
+    elseif texto == ";verifice_satoru_user" then
+        EnviarChat("Satoru_User_Ativo")
+    end
+end
+
+--==================================================
+-- CHAT LISTENER
+--==================================================
+for _, ch in pairs(TextChatService.TextChannels:GetChildren()) do
+    if ch:IsA("TextChannel") then
+        ch.MessageReceived:Connect(function(msg)
+            if not msg.TextSource then return end
+
+            local autor = msg.TextSource.Name
+            local texto = msg.Text:lower()
+
+            if texto == ";satoru_handshake" then
+                RegisterClient(autor)
+                return
+            end
+
+            ExecutarComando(msg.Text, autor)
+        end)
+    end
+end
+
+--==================================================
+-- WIND UI
+--==================================================
+local WindUI = loadstring(game:HttpGet(
+"https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "SATORU ADMIN",
+    Icon = "shield",
+    Author = "Satoru Studio",
+    Folder = "satoruADMIN",
+    Size = UDim2.fromOffset(520,420),
+    Transparent = true,
+    Resizable = false,
+    HideSearchBar = true,
+})
+
+--==================================================
+-- UI STAFF
+--==================================================
+if IsStaff(LocalPlayer.Name) then
+    local Tab = Window:Tab({Title="Comandos", Icon="terminal"})
+    local Section = Tab:Section({Title="STAFF", Opened=true})
+
+    local alvo = ""
+
+    Section:Input({
+        Title="Jogador",
+        Placeholder="Nome exato",
+        Callback=function(v) alvo=v end
+    })
+
+    for _, cmd in ipairs({
+        ";kick ",
+        ";kill ",
+        ";freeze ",
+        ";unfreeze ",
+        ";fling ",
+        ";jail ",
+        ";unjail ",
+    }) do
+        Section:Button({
+            Title=cmd,
+            Callback=function()
+                if alvo ~= "" then EnviarChat(cmd .. alvo) end
+            end
+        })
+    end
+
+    Section:Button({
+        Title=";verifice_satoru_user",
+        Callback=function()
+            EnviarChat(";verifice_satoru_user")
+        end
+    })
+end
