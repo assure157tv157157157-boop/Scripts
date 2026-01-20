@@ -353,7 +353,7 @@ end)
 print(" NEVLIZ RECEIVER FINAL V17.2 ATIVO ")
 
 --// Biblioteca e Janela
-local Library = loadstring(game:HttpGet("https://api.junkie-development.de/api/v1/luascripts/public/04327df7c06d59ae8954a1b5e00da2bb76848e8d14783d4fabb82fe37ce4501d/download"))()
+local Library = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 local Window = Library:MakeWindow({
     Title = "🎩 NEVLIZ HUB 🎩| BROOKHAVEN",
