@@ -1,0 +1,1685 @@
+=====================================================
+|                  Drip client                      |
+=====================================================
+| API Status:              Online                   |
+| Script Name:            Drip Client               |
+| API Drip:                Online                   |
+| Version:                 4.0.2                    |
+=====================================================
+]])
+-----------------///////TABS - Admin///////----------------
+wait(0.1)
+do
+--[[local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+local RunService = game:GetService("RunService")]]
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+getgenv().ScriptID = "DRIPCLIENTADM"
+
+local HttpService = game:GetService("HttpService")
+
+local permissionURL = "https://raw.githubusercontent.com/dripsolutions/applications/refs/heads/main/Solutions.lua"
+
+local success, result = pcall(function()
+    return loadstring(game:HttpGet(permissionURL))()
+end)
+
+if not success or type(result) ~= "table" then
+    warn("droga")
+    return
+end
+
+allowedUsers = result
+
+local player = Players.LocalPlayer
+local isAuthorized = allowedUsers[player.Name] ~= nil
+
+redzlib:Notify({
+	Title = "loading",
+	Description = "drip client",
+	Type = "Success",
+	Duration = 4
+})
+
+local selectedPlayer = nil
+local Jajail = {}
+local MagGelion = {}
+local ObEsp = {}
+
+local function sendChatCommand(command)
+    if not command then return end
+    task.wait(0.1)
+    local success = false
+    if TextChatService and TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        local channel = TextChatService:FindFirstChild("TextChannels")
+        if channel then
+            local generalChannel = channel:FindFirstChild("RBXGeneral")
+            if generalChannel then
+                local ok = pcall(function()
+                    generalChannel:SendAsync(command)
+                end)
+                if ok then
+                    success = true
+                end
+            end
+        end
+    end
+    if not success then
+        local defaultChatSystemChatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+        if defaultChatSystemChatEvents then
+            local sayMessageRequest = defaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
+            if sayMessageRequest then
+                pcall(function()
+                    sayMessageRequest:FireServer(command, "All")
+                    success = true
+                end)
+            end
+        end
+    end
+    
+    if not success and game:GetService("Chat") then
+        pcall(function()
+            game:GetService("Chat"):Chat(LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head"), command)
+            success = true
+        end)
+    end
+    
+    if success then
+        redzlib:Notify({
+	Title = "Tentando",
+	Description = "Working",
+	Type = "Success",
+	Duration = 4
+})
+        --[[game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Comando Enviado",
+            Text = command,
+            Duration = 2
+        })]]
+    else
+        redzlib:Notify({
+	Title = "erro loaded",
+	Description = "falha ao enviar: " .. command,
+	Type = "erro",
+	Duration = 4
+})
+        --[[game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Erro",
+            Text = "Falha ao enviar: " .. command,
+            Duration = 3
+        })]]
+    end
+end
+
+local function createInterface()
+    if not isAuthorized then return end
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AdminPanel"
+    screenGui.Parent = PlayerGui
+    screenGui.ResetOnSpawn = false
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0, 520, 0, 420)
+    mainFrame.Position = UDim2.new(0.5, -260, 0.5, -210)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(75, 0, 130)
+    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Active = true
+    mainFrame.Draggable = true
+    mainFrame.Parent = screenGui
+    mainFrame.ClipsDescendants = true
+    
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 12)
+    mainCorner.Parent = mainFrame
+    
+    local mainStroke = Instance.new("UIStroke")
+    mainStroke.Color = Color3.fromRGB(0, 0, 0)
+    mainStroke.Thickness = 2
+    mainStroke.Parent = mainFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "Title"
+    titleLabel.Size = UDim2.new(1, 0, 0, 45)
+    titleLabel.Position = UDim2.new(0, 0, 0, 0)
+    titleLabel.BackgroundColor3 = Color3.fromRGB(55, 25, 110)
+    titleLabel.BorderSizePixel = 0
+    titleLabel.Text = "Drip Solutions Admin"
+    titleLabel.TextColor3 = Color3.new(1, 1, 1)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Parent = mainFrame
+    
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = titleLabel
+
+    local titleStroke = Instance.new("UIStroke")
+    titleStroke.Color = Color3.fromRGB(0, 0, 0)
+    titleStroke.Thickness = 1
+    titleStroke.Parent = titleLabel
+    
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Name = "ContentFrame"
+    contentFrame.Size = UDim2.new(1, -20, 1, -75)
+    contentFrame.Position = UDim2.new(0, 10, 0, 65)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.Parent = mainFrame
+    contentFrame.ClipsDescendants = true
+    
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Name = "ScrollFrame"
+    scrollFrame.Size = UDim2.new(1, 0, 1, 0)
+    scrollFrame.Position = UDim2.new(0, 0, 0, 0)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.BorderSizePixel = 0
+    scrollFrame.ScrollBarThickness = 4
+    scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    scrollFrame.Parent = contentFrame
+    
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 6)
+    layout.Parent = scrollFrame
+    
+    return screenGui, mainFrame, scrollFrame, layout
+end
+
+local function createButton(parent, text, callback)
+    local button = Instance.new("TextButton")
+    button.Name = text:gsub(" ", "")
+    button.Size = UDim2.new(1, 0, 0, 32)
+    button.BackgroundColor3 = Color3.fromRGB(90, 45, 180)
+    button.BackgroundTransparency = 0.2
+    button.BorderSizePixel = 0
+    button.Text = text
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.TextSize = 15
+    button.Font = Enum.Font.FredokaOne
+    button.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = button
+    
+    local buttonStroke = Instance.new("UIStroke")
+    buttonStroke.Color = Color3.fromRGB(0, 0, 0)
+    buttonStroke.Thickness = 1
+    buttonStroke.Parent = button
+    
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.05
+        }):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.2
+        }):Play()
+    end)
+    
+    button.MouseButton1Click:Connect(function()
+        button.Active = false
+        callback()
+        task.wait(0.5)
+        button.Active = true
+    end)
+    
+    return button
+end
+
+local function createDropdown(parent, text, options, callback)
+    local frame = Instance.new("Frame")
+    frame.Name = text:gsub(" ", ""):gsub("[^%w]", "")
+    frame.Size = UDim2.new(1, 0, 0, 32)
+    frame.BackgroundColor3 = Color3.fromRGB(70, 35, 140)
+    frame.BackgroundTransparency = 0.2
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    frame.ZIndex = 10
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
+    
+    local frameStroke = Instance.new("UIStroke")
+    frameStroke.Color = Color3.fromRGB(0, 0, 0)
+    frameStroke.Thickness = 1
+    frameStroke.Parent = frame
+    
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 1, 0)
+    button.BackgroundTransparency = 1
+    button.Text = text
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.TextSize = 14
+    button.Font = Enum.Font.Gotham
+    button.Parent = frame
+    button.ZIndex = 11
+    
+    local dropdown = Instance.new("Frame")
+    dropdown.Name = "Dropdown"
+    dropdown.Size = UDim2.new(1, 0, 0, 0)
+    dropdown.Position = UDim2.new(0, 0, 1, 2)
+    dropdown.BackgroundColor3 = Color3.fromRGB(50, 25, 100)
+    dropdown.BorderSizePixel = 0
+    dropdown.Visible = false
+    dropdown.Parent = frame
+    dropdown.ZIndex = 15
+    
+    local dropCorner = Instance.new("UICorner")
+    dropCorner.CornerRadius = UDim.new(0, 6)
+    dropCorner.Parent = dropdown
+    
+    local dropStroke = Instance.new("UIStroke")
+    dropStroke.Color = Color3.fromRGB(0, 0, 0)
+    dropStroke.Thickness = 1
+    dropStroke.Parent = dropdown
+    
+    local dropScroll = Instance.new("ScrollingFrame")
+    dropScroll.Size = UDim2.new(1, 0, 1, 0)
+    dropScroll.BackgroundTransparency = 1
+    dropScroll.BorderSizePixel = 0
+    dropScroll.ScrollBarThickness = 3
+    dropScroll.ScrollBarImageColor3 = Color3.fromRGB(150, 150, 150)
+    dropScroll.Parent = dropdown
+    dropScroll.ZIndex = 16
+    
+    local dropLayout = Instance.new("UIListLayout")
+    dropLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    dropLayout.Parent = dropScroll
+    
+    local function updateOptions(newOptions)
+        if not newOptions or #newOptions == 0 then
+            dropdown.Size = UDim2.new(1, 0, 0, 0)
+            return
+        end
+        
+        for _, child in ipairs(dropScroll:GetChildren()) do
+            if child ~= dropLayout then
+                child:Destroy()
+            end
+        end
+
+        local optionNames = {}
+        if type(newOptions[1]) == "table" then
+            for _, option in ipairs(newOptions) do
+                table.insert(optionNames, option.Name)
+            end
+        else
+            optionNames = newOptions
+        end
+        
+        for i, optionName in ipairs(optionNames) do
+            if optionName and type(optionName) == "string" then
+                local optionButton = Instance.new("TextButton")
+                optionButton.Size = UDim2.new(1, 0, 0, 28)
+                optionButton.BackgroundTransparency = 1
+                optionButton.Text = optionName
+                optionButton.TextColor3 = Color3.new(1, 1, 1)
+                optionButton.TextSize = 13
+                optionButton.Font = Enum.Font.Gotham
+                optionButton.Parent = dropScroll
+                optionButton.ZIndex = 17
+                
+                optionButton.MouseEnter:Connect(function()
+                    optionButton.BackgroundTransparency = 0.7
+                    optionButton.BackgroundColor3 = Color3.fromRGB(80, 40, 160)
+                end)
+                
+                optionButton.MouseLeave:Connect(function()
+                    optionButton.BackgroundTransparency = 1
+                end)
+                
+                optionButton.MouseButton1Click:Connect(function()
+                    button.Text = optionName
+                    dropdown.Visible = false
+                    if type(newOptions[1]) == "table" then
+                        callback(newOptions[i])
+                    else
+                        callback(optionName)
+                    end
+                end)
+            end
+        end
+        
+        local contentSize = math.min(#optionNames * 28, 140)
+        dropdown.Size = UDim2.new(1, 0, 0, contentSize)
+        dropScroll.CanvasSize = UDim2.new(0, 0, 0, #optionNames * 28)
+    end
+    
+    local dropdownObject = {
+        Frame = frame,
+        Button = button,
+        UpdateOptions = updateOptions
+    }
+    
+    pcall(function()
+        updateOptions(options)
+    end)
+    
+    button.MouseButton1Click:Connect(function()
+        for _, child in ipairs(parent:GetChildren()) do
+            if child:FindFirstChild("Dropdown") and child ~= frame then
+                child.Dropdown.Visible = false
+            end
+        end
+        dropdown.Visible = not dropdown.Visible
+    end)
+    
+    return dropdownObject
+end
+
+local function createPlayerDropdown(parent, text, callback)
+    local dropdown = createDropdown(parent, text, {}, callback)
+
+    local function refreshPlayers()
+        local playerList = {}
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= Players.LocalPlayer then
+                table.insert(playerList, plr.Name)
+            end
+        end
+        dropdown.UpdateOptions(playerList)
+    end
+
+    Players.PlayerAdded:Connect(refreshPlayers)
+    Players.PlayerRemoving:Connect(refreshPlayers)
+
+    refreshPlayers()
+
+    return dropdown
+end
+
+local function createToggle(parent, text, callback)
+    local frame = Instance.new("Frame")
+    frame.Name = text:gsub(" ", "")
+    frame.Size = UDim2.new(1, 0, 0, 32)
+    frame.BackgroundColor3 = Color3.fromRGB(70, 35, 140)
+    frame.BackgroundTransparency = 0.2
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
+    
+    local frameStroke = Instance.new("UIStroke")
+    frameStroke.Color = Color3.fromRGB(0, 0, 0)
+    frameStroke.Thickness = 1
+    frameStroke.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.65, 0, 1, 0)
+    label.Position = UDim2.new(0, 8, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local toggleTrack = Instance.new("Frame")
+    toggleTrack.Size = UDim2.new(0, 50, 0, 22)
+    toggleTrack.Position = UDim2.new(1, -55, 0.5, -11)
+    toggleTrack.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    toggleTrack.BorderSizePixel = 0
+    toggleTrack.Parent = frame
+    
+    local trackCorner = Instance.new("UICorner")
+    trackCorner.CornerRadius = UDim.new(0, 11)
+    trackCorner.Parent = toggleTrack
+    
+    local trackStroke = Instance.new("UIStroke")
+    trackStroke.Color = Color3.fromRGB(139, 69, 19)
+    trackStroke.Thickness = 1
+    trackStroke.Parent = toggleTrack
+    
+    local toggleBall = Instance.new("Frame")
+    toggleBall.Size = UDim2.new(0, 18, 0, 18)
+    toggleBall.Position = UDim2.new(0, 2, 0.5, -9)
+    toggleBall.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    toggleBall.BorderSizePixel = 0
+    toggleBall.Parent = toggleTrack
+    
+    local ballCorner = Instance.new("UICorner")
+    ballCorner.CornerRadius = UDim.new(0, 9)
+    ballCorner.Parent = toggleBall
+    
+    local ballStroke = Instance.new("UIStroke")
+    ballStroke.Color = Color3.fromRGB(139, 69, 19)
+    ballStroke.Thickness = 1
+    ballStroke.Parent = toggleBall
+    
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(1, 0, 1, 0)
+    toggleButton.BackgroundTransparency = 1
+    toggleButton.Text = ""
+    toggleButton.Parent = toggleTrack
+    
+    local isOn = false
+    
+    local function updateToggle()
+        local targetPosition = isOn and UDim2.new(0, 30, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+        local targetColor = isOn and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(60, 60, 60)
+        
+        TweenService:Create(toggleBall, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Position = targetPosition
+        }):Play()
+        
+        TweenService:Create(toggleTrack, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            BackgroundColor3 = targetColor
+        }):Play()
+    end
+    
+    toggleButton.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        updateToggle()
+        callback(isOn)
+    end)
+    
+    return frame, toggleButton
+end
+
+local function createSection(parent, text)
+    local section = Instance.new("TextLabel")
+    section.Name = text:gsub(" ", "")
+    section.Size = UDim2.new(1, 0, 0, 20)
+    section.BackgroundColor3 = Color3.fromRGB(45, 22, 90)
+    section.BackgroundTransparency = 0.3
+    section.BorderSizePixel = 0
+    section.Text = " " .. text
+    section.TextColor3 = Color3.fromRGB(220, 220, 220)
+    section.TextSize = 15
+    section.Font = Enum.Font.SourceSansBold
+    section.TextXAlignment = Enum.TextXAlignment.Left
+    section.Parent = parent
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingLeft = UDim.new(0, 8)
+    padding.Parent = section
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = section
+    
+    return section
+end
+
+function CreateJail(player)
+    if Jajail[player] then return end
+    
+    local character = player.Character
+    local myChar = LocalPlayer.Character -- seu personagem
+    
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local HRP = character.HumanoidRootPart
+        local cageSize = Vector3.new(10, 10, 10)
+        local wallThickness = 0.5
+        local transparency = 0.3
+        local cageColor = Color3.fromRGB(75, 0, 130)
+
+        -- função interna que monta a jaula em volta de um HRP
+        local function buildCage(targetHRP, suffix)
+            local cageModel = Instance.new("Model")
+            cageModel.Name = "JaulaDeAdmin_" .. player.Name .. suffix
+            cageModel.Parent = workspace
+
+            local function createWall(size, positionOffset)
+                local wall = Instance.new("Part")
+                wall.Size = size
+                wall.Anchored = true
+                wall.CanCollide = true
+                wall.Transparency = transparency
+                wall.Color = cageColor
+                wall.Material = Enum.Material.ForceField
+                wall.CFrame = targetHRP.CFrame * positionOffset
+                wall.Parent = cageModel
+
+                local stroke = Instance.new("SelectionBox")
+                stroke.Color3 = Color3.fromRGB(147, 112, 219)
+                stroke.LineThickness = 0.2
+                stroke.Transparency = 0.5
+                stroke.Adornee = wall
+                stroke.Parent = wall
+
+                local light = Instance.new("PointLight")
+                light.Color = Color3.fromRGB(147, 112, 219)
+                light.Brightness = 0.5
+                light.Range = 15
+                light.Parent = wall
+            end
+
+            -- cria paredes
+            createWall(Vector3.new(cageSize.X, wallThickness, cageSize.Z), CFrame.new(0, -cageSize.Y/2, 0))
+            createWall(Vector3.new(cageSize.X, wallThickness, cageSize.Z), CFrame.new(0, cageSize.Y/2, 0))
+            createWall(Vector3.new(cageSize.X, cageSize.Y, wallThickness), CFrame.new(0, 0, -cageSize.Z/2))
+            createWall(Vector3.new(cageSize.X, cageSize.Y, wallThickness), CFrame.new(0, 0, cageSize.Z/2))
+            createWall(Vector3.new(wallThickness, cageSize.Y, cageSize.Z), CFrame.new(cageSize.X/2, 0, 0))
+            createWall(Vector3.new(wallThickness, cageSize.Y, cageSize.Z), CFrame.new(-cageSize.X/2, 0, 0))
+
+            return cageModel
+        end
+
+        -- jaula real no preso
+        local jailModel = buildCage(HRP, "_Preso")
+        Jajail[player] = jailModel
+
+        -- cópia só pra você visualizar no seu humanoid
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            buildCage(myChar.HumanoidRootPart, "_Visual")
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Foi preso",
+            Text = player.Name .. " foi preso na jaula",
+            Duration = 4
+        })
+    end
+end
+function RemoveJail(player)
+    if Jajail[player] then
+        Jajail[player]:Destroy()
+        Jajail[player] = nil
+    end
+end
+
+function FreezePlayer(player)
+    if MagGelion[player] then return end
+    
+    local character = player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 0
+            humanoid.JumpPower = 0
+            humanoid.JumpHeight = 0
+        end
+
+        for _, part in pairs(character:GetChildren()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Anchored = true
+            end
+        end
+        
+        local HRP = character:FindFirstChild("HumanoidRootPart")
+        if HRP then
+            HRP.Anchored = true
+        end
+        
+        MagGelion[player] = {
+            originalWalkSpeed = humanoid and humanoid.WalkSpeed or 16,
+            originalJumpPower = humanoid and humanoid.JumpPower or 50,
+            originalJumpHeight = humanoid and humanoid.JumpHeight or 7.2,
+            humanoid = humanoid,
+            hrp = HRP,
+            character = character
+        }
+    end
+end
+
+function UnfreezePlayer(player)
+    if MagGelion[player] then
+        local data = MagGelion[player]
+        
+        if data.humanoid and data.humanoid.Parent then
+            data.humanoid.WalkSpeed = data.originalWalkSpeed or 16
+            data.humanoid.JumpPower = data.originalJumpPower or 50
+            data.humanoid.JumpHeight = data.originalJumpHeight or 7.2
+        end
+        
+        if data.character and data.character.Parent then
+            for _, part in pairs(data.character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = false
+                end
+            end
+        end
+        
+        MagGelion[player] = nil
+    end
+end
+
+function Explode(targetPlayer)
+    local function explodePlayer()
+        local character = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        
+        if not humanoid then return end
+
+        local explosion = Instance.new("Explosion")
+        explosion.Position = hrp.Position
+        explosion.BlastRadius = 0
+        explosion.BlastPressure = 0
+        explosion.ExplosionType = Enum.ExplosionType.NoCraters
+        explosion.Parent = workspace
+
+        local particle = Instance.new("ParticleEmitter")
+        particle.Texture = "rbxassetid://243660364"
+        particle.Lifetime = NumberRange.new(1)
+        particle.Rate = 100
+        particle.Speed = NumberRange.new(20, 40)
+        particle.Size = NumberSequence.new(3)
+        particle.Rotation = NumberRange.new(0, 360)
+        particle.RotSpeed = NumberRange.new(180)
+        particle.Parent = hrp
+
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Velocity = Vector3.new(
+                    math.random(-200, 200),
+                    math.random(100, 150),
+                    math.random(-20, 40)
+                )
+            end
+        end
+
+        humanoid.Health = 0
+
+        task.delay(1.5, function()
+            particle.Enabled = false
+            particle:Destroy()
+        end)
+    end
+
+    explodePlayer()
+end
+
+function CoolkidAvatar(targetPlayer)
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local WearRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear")
+    
+    -- Use targetPlayer instead of LocalPlayer
+    local Character = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+    if not Humanoid then return end
+
+    local Desc = Humanoid:GetAppliedDescription()
+
+    -- Remove current accessories
+    for _, accessory in ipairs(Desc:GetAccessories(true)) do
+        if accessory.AssetId then
+            local args = {
+                [1] = tonumber(accessory.AssetId)
+            }
+            WearRemote:InvokeServer(unpack(args))
+        end
+    end
+    
+    task.wait()
+    
+    -- Change body proportions
+    local args = {
+        {
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        }
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack(args))
+    
+    -- Add accessories
+    local args = {
+        18554114295
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+    
+    local args = {
+        3164473649
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+    
+    -- Change body color
+    local args = {
+        "Really red"
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ChangeBodyColor"):FireServer(unpack(args))
+    
+    -- Add final accessory
+    local args = {
+        6093233760
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+end
+
+local function getPlayerList()
+    local list = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(list, player.Name)
+        end
+    end
+    return list
+end
+
+function Coolkid(targetPlayer)
+    local sky = Instance.new("Sky")
+    sky.SkyboxBk = "rbxassetid://100048062301288"
+    sky.SkyboxDn = "rbxassetid://100048062301288"
+    sky.SkyboxFt = "rbxassetid://100048062301288"
+    sky.SkyboxLf = "rbxassetid://100048062301288"
+    sky.SkyboxRt = "rbxassetid://100048062301288"
+    sky.SkyboxUp = "rbxassetid://100048062301288"
+    sky.Parent = game.Lighting
+
+    local decalId = "rbxassetid://100048062301288"
+
+    local function applyDecals(part)
+        if part:IsA("BasePart") then
+            for _, face in pairs(Enum.NormalId:GetEnumItems()) do
+                local decal = Instance.new("Decal")
+                decal.Face = face
+                decal.Texture = decalId
+                decal.Parent = part
+            end
+        end
+    end
+
+    for _, part in pairs(workspace:GetDescendants()) do
+        applyDecals(part)
+    end
+
+    workspace.DescendantAdded:Connect(function(descendant)
+        applyDecals(descendant)
+    end)
+
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+
+    local imageId = "rbxassetid://100048062301288"
+
+    local function criarParticula(parte)
+        local particle = Instance.new("ParticleEmitter")
+        particle.Texture = imageId
+        particle.Rate = 10
+        particle.Lifetime = NumberRange.new(1)
+        particle.Speed = NumberRange.new(2, 5)
+        particle.Size = NumberSequence.new(1)
+        particle.Rotation = NumberRange.new(0, 360)
+        particle.RotSpeed = NumberRange.new(10)
+        particle.SpreadAngle = Vector2.new(360, 360)
+        particle.Parent = parte
+    end
+
+    local function aplicarParticulas(character)
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and not part:FindFirstChildOfClass("ParticleEmitter") then
+                criarParticula(part)
+            end
+        end
+    end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character then
+            aplicarParticulas(player.Character)
+        end
+        player.CharacterAdded:Connect(aplicarParticulas)
+    end
+
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(aplicarParticulas)
+    end)
+
+    local player = game.Players.LocalPlayer
+    local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    gui.Name = "c00lkidTopBar"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+
+    local topBar = Instance.new("Frame", gui)
+    topBar.BackgroundColor3 = Color3.new(0, 0, 0)
+    topBar.Size = UDim2.new(1, 100, 0, 25)
+    topBar.Position = UDim2.new(0, -50, 0, 0)
+    topBar.BorderSizePixel = 0
+    topBar.ZIndex = 2
+
+    local title = Instance.new("TextLabel", topBar)
+    title.Size = UDim2.new(1, 0, 1, 0)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "Game Hacked"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.Font = Enum.Font.SourceSans
+    title.TextSize = 20
+    title.TextStrokeTransparency = 0.5
+    title.TextStrokeColor3 = Color3.new(0, 0, 0)
+    title.ZIndex = 3
+
+    local Sound = Instance.new("Sound")
+    Sound.SoundId = "rbxassetid://99986264226275"
+    Sound.Looped = false
+    Sound.Parent = workspace
+
+    local function playSoundWithRandomSettings()
+        Sound.Volume = math.random(1, 3)
+        Sound.PlaybackSpeed = math.random(20, 30) / 100
+        Sound:Play()
+    end
+
+    playSoundWithRandomSettings()
+
+    Sound.Ended:Connect(playSoundWithRandomSettings)
+    
+    -- Notification for execution
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Coolkid Mode",
+        Text = "Environment completely modified!",
+        Duration = 4
+    })
+end
+
+function MessiJumpscare(targetPlayer)
+    local Players = game:GetService("Players")
+    local SoundService = game:GetService("SoundService")
+    local CoreGui = game:GetService("CoreGui")
+    local RunService = game:GetService("RunService")
+
+    local jumpscareGui = Instance.new("ScreenGui")
+    jumpscareGui.Name = "FullJumpscare"
+    jumpscareGui.IgnoreGuiInset = true
+    jumpscareGui.ResetOnSpawn = false
+    jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    jumpscareGui.DisplayOrder = 999999
+    jumpscareGui.Parent = CoreGui
+
+    local image = Instance.new("ImageLabel")
+    image.Size = UDim2.new(1.2, 0, 1.2, 0)
+    image.Position = UDim2.new(-0.1, 0, -0.1, 0)
+    image.BackgroundTransparency = 1
+    image.Image = "rbxassetid://90576086504588"
+    image.ZIndex = 999999
+    image.Parent = jumpscareGui
+
+    local jumpscareSound = Instance.new("Sound")
+    jumpscareSound.SoundId = "rbxassetid://88347533205938"
+    jumpscareSound.Volume = 10
+    jumpscareSound.Parent = SoundService
+
+    local followupSound = Instance.new("Sound")
+    followupSound.SoundId = "rbxassetid://113413619114733"
+    followupSound.Volume = 10
+    followupSound.Parent = SoundService
+
+    local function startMessiJumpscare()
+        image.Visible = true
+        jumpscareSound:Play()
+
+        task.delay(2, function()
+            followupSound:Play()
+
+            followupSound.Ended:Connect(function()
+                jumpscareGui:Destroy()
+            end)
+        end)
+    end
+
+    startMessiJumpscare()
+    
+    -- Notification
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Jumpscare",
+        Text = "Messi jumpscare activated!",
+        Duration = 3
+    })
+end
+
+function Jumpscare(targetPlayer)
+    local Players = game:GetService("Players")
+    local SoundService = game:GetService("SoundService")
+    local CoreGui = game:GetService("CoreGui")
+    local RunService = game:GetService("RunService")
+
+    local jumpscareGui = Instance.new("ScreenGui")
+    jumpscareGui.Name = "FullJumpscare"
+    jumpscareGui.IgnoreGuiInset = true
+    jumpscareGui.ResetOnSpawn = false
+    jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    jumpscareGui.DisplayOrder = 999999
+    jumpscareGui.Parent = CoreGui
+
+    local image = Instance.new("ImageLabel")
+    image.Size = UDim2.new(1.2, 0, 1.2, 0)
+    image.Position = UDim2.new(-0.1, 0, -0.1, 0)
+    image.BackgroundTransparency = 1
+    image.Image = "rbxassetid://108753859505348"
+    image.ZIndex = 999999
+    image.Parent = jumpscareGui
+
+    local jumpscareSound = Instance.new("Sound")
+    jumpscareSound.SoundId = "rbxassetid://18967004856"
+    jumpscareSound.Volume = 10
+    jumpscareSound.Parent = SoundService
+
+    local followupSound = Instance.new("Sound")
+    followupSound.SoundId = "rbxassetid://103396125105301"
+    followupSound.Volume = 10
+    followupSound.Parent = SoundService
+
+    local shaking = true
+    task.spawn(function()
+        while shaking do
+            local offsetX = math.random(-10, 10)
+            local offsetY = math.random(-10, 10)
+            image.Position = UDim2.new(-0.1, offsetX, -0.1, offsetY)
+            task.wait(0.02)
+        end
+    end)
+
+    local function startJumpscare()
+        image.Visible = true
+        jumpscareSound:Play()
+
+        task.delay(2, function()
+            followupSound:Play()
+
+            followupSound.Ended:Connect(function()
+                shaking = false
+                jumpscareGui:Destroy()
+            end)
+        end)
+    end
+
+    startJumpscare()
+    
+    -- Notification
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Jumpscare",
+        Text = "Classic jumpscare activated!",
+        Duration = 3
+    })
+end
+
+function Backrooms(targetPlayer)
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    
+    -- Use targetPlayer instead of LocalPlayer for teleportation
+    local player = targetPlayer or Players.LocalPlayer
+    
+    -- Create screen effect only for LocalPlayer (the admin using the command)
+    local LocalPlayer = Players.LocalPlayer
+    local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    screenGui.IgnoreGuiInset = true
+    screenGui.ResetOnSpawn = false
+
+    local blackFrame = Instance.new("Frame", screenGui)
+    blackFrame.Size = UDim2.new(1, 0, 1, 0)
+    blackFrame.Position = UDim2.new(0, 0, 0, 0)
+    blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+    blackFrame.BackgroundTransparency = 1
+
+    TweenService:Create(blackFrame, TweenInfo.new(1), {BackgroundTransparency = 0}):Play()
+    task.wait(1.2)
+
+    -- Load the Backrooms model
+    local success, ModelObject = pcall(function()
+        return game:GetObjects("rbxassetid://10581711055")[1]
+    end)
+    
+    if not success then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Error",
+            Text = "Failed to load Backrooms model",
+            Duration = 3
+        })
+        screenGui:Destroy()
+        return
+    end
+    
+    ModelObject.Parent = workspace
+
+    -- Position the model in a remote location
+    for _, part in pairs(ModelObject:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Position = part.Position + Vector3.new(99999, 99999, 99999)
+        end
+    end
+
+    -- Teleport the target player to the Backrooms
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(100127, 100003, 100192)
+    end
+
+    task.wait(0.5)
+
+    -- Fade out the black screen
+    TweenService:Create(blackFrame, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+    task.wait(1.2)
+    
+    -- Clean up the screen GUI
+    screenGui:Destroy()
+    
+    -- Notification
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Backrooms",
+        Text = player.Name .. " has been sent to the Backrooms!",
+        Duration = 4
+    })
+end
+
+local function bringTo(playerName)
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local target = Players:FindFirstChild(playerName)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+        end
+    end
+end
+
+local screenGui, mainFrame, scrollFrame, layout
+if isAuthorized then
+    screenGui, mainFrame, scrollFrame, layout = createInterface()
+end
+
+local function clearContent()
+    if not isAuthorized then return end
+    for _, child in ipairs(scrollFrame:GetChildren()) do
+        if child ~= layout then
+            child:Destroy()
+        end
+    end
+end
+
+
+                    -----/// Script | ///------
+local function showAdminTab()
+    if not isAuthorized then return end
+    clearContent()
+    
+    createSection(scrollFrame, "Seleção de Jogador")
+    
+    local playerDropdown = createDropdown(scrollFrame, "Selecione um jogador", getPlayerList(), function(value)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player.Name == value and player ~= LocalPlayer then
+                selectedPlayer = player
+                break
+            end
+        end
+    end)
+    
+    playerDropdownRef = playerDropdown
+    
+    createButton(scrollFrame, "Atualizar Lista", function()
+        pcall(function()
+            if playerDropdown and playerDropdown.UpdateOptions then
+                playerDropdown.UpdateOptions(getPlayerList())
+            end
+        end)
+    end)
+    
+    createSection(scrollFrame, "Comandos Básicos")
+    
+    createButton(scrollFrame, "Bring Player", function()
+        if selectedPlayer then
+            sendChatCommand("/bring " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Kill Player", function()
+        if selectedPlayer then
+            sendChatCommand("/kill " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Kick Player", function()
+        if selectedPlayer then
+            sendChatCommand("/kick " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+
+--[[    createButton(scrollFrame, "Aplicar Skin", function()
+        if selectedPlayer and LocalPlayer.Character and selectedPlayer.Character then
+            local localHumanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            local targetHumanoid = selectedPlayer.Character:FindFirstChildOfClass("Humanoid")
+
+            if localHumanoid and targetHumanoid then
+                local desc = localHumanoid:GetAppliedDescription()
+                targetHumanoid:ApplyDescription(desc)
+
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Skin Aplicada",
+                    Text = "Sua skin foi aplicada em " .. selectedPlayer.Name,
+                    Duration = 4
+                })
+            end
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    ]]
+    createSection(scrollFrame, "Comandos de Controle")
+    
+    createButton(scrollFrame, "Jail Player", function()
+        if selectedPlayer then
+            sendChatCommand("/jail " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Unjail Player", function()
+        if selectedPlayer then
+            sendChatCommand("/unjail " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Freeze Player", function()
+        if selectedPlayer then
+            sendChatCommand("/freeze " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Unfreeze", function()
+        if selectedPlayer then
+            sendChatCommand("/unfreeze " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createSection(scrollFrame, "Comandos Views")
+    
+    createButton(scrollFrame, "Explodir Jogador", function()
+        if selectedPlayer then
+            sendChatCommand("/explod " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Imagens Coolkid", function()
+        if selectedPlayer then
+            sendChatCommand("/coolkidavatar " .. selectedPlayer.Name) 
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Hakinggame", function()
+        if selectedPlayer then
+            sendChatCommand("/c00lkid " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Jumpscare", function()
+        if selectedPlayer then
+            sendChatCommand("/jumpscare " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Messis", function()
+        if selectedPlayer then
+            sendChatCommand("/messijumpscare " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Backrooms", function()
+        if selectedPlayer then
+            sendChatCommand("/backrooms " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+    
+    createButton(scrollFrame, "Fogo Inimigo", function()
+        if selectedPlayer then
+            sendChatCommand("/fires " .. selectedPlayer.Name)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Erro",
+                Text = "Selecione um jogador primeiro",
+                Duration = 3
+            })
+        end
+    end)
+        createSection(scrollFrame, "Verificação")
+        
+        createButton(scrollFrame, "Verificar", function()
+            sendChatCommand("verificar_drip_client")
+            redzlib:Notify({
+                	Title = "Verificação",
+                	Description = "Verificando usuários...",
+                	Type = "Success",
+                	Duration = 4
+                })
+            --[[game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Verificação",
+                Text = "Verificando usuários...",
+                Duration = 3
+            })]]
+        
+        local responses = {}
+        
+        local responseConnection
+        if TextChatService and TextChatService.TextChannels and TextChatService.TextChannels.RBXGeneral then
+            responseConnection = TextChatService.TextChannels.RBXGeneral.MessageReceived:Connect(function(msg)
+                pcall(function()
+                    if msg.Text == "Drip_Client_Active" then
+                        local responder = msg.TextSource and Players:GetPlayerByUserId(msg.TextSource.UserId)
+                        if responder and responder ~= LocalPlayer then
+                            responses[responder.Name] = true
+                        end
+                    end
+                end)
+            end)
+            
+            task.spawn(function()
+                task.wait(5)
+                if responseConnection then
+                    responseConnection:Disconnect()
+                end
+                
+                local count = 0
+                local names = {}
+                for name, _ in pairs(responses) do
+                    count = count + 1
+                    table.insert(names, name)
+                end
+                
+                if count > 0 then
+                    local nameList = table.concat(names, ", ")
+                    redzlib:Notify({
+                	Title = "Verificação Completa",
+                	Description = count .. " usuário(s) encontrado(s): " .. nameList,
+                	Type = "Success",
+                	Duration = 7
+                })
+                    --[[game:GetService("StarterGui"):SetCore("SendNotification", {
+                        Title = "Verificação Completa",
+                        Text = count .. " usuário(s) encontrado(s): " .. nameList,
+                        Duration = 8
+                    })]]
+                else
+                    redzlib:Notify({
+                    	Title = "Verificação Completa",
+                    	Description = "Nenhum outro usuário encontrado",
+                    	Type = "Success",
+                    	Duration = 4
+                    })
+                    --[[game:GetService("StarterGui"):SetCore("SendNotification", {
+                        Title = "Verificação Completa",
+                        Text = "Nenhum outro usuário encontrado",
+                        Duration = 5
+                    })]]
+                end
+            end)
+        end
+    end)
+    
+    task.wait()
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 15)
+end
+
+if isAuthorized then
+    showAdminTab()
+    local minimizeButton = Instance.new("TextButton")
+    minimizeButton.Name = "MinimizeButton"
+    minimizeButton.Size = UDim2.new(0, 28, 0, 28)
+    minimizeButton.Position = UDim2.new(1, -35, 0, 8)
+    minimizeButton.BackgroundTransparency = 1
+    minimizeButton.BorderSizePixel = 0
+    minimizeButton.Text = "−"
+    minimizeButton.TextColor3 = Color3.new(1, 1, 1)
+    minimizeButton.TextSize = 18
+    minimizeButton.Font = Enum.Font.GothamBold
+    minimizeButton.Parent = mainFrame
+
+    local isMinimized = false
+    local originalSize = mainFrame.Size
+
+    minimizeButton.MouseButton1Click:Connect(function()
+        isMinimized = not isMinimized
+        if isMinimized then
+            mainFrame.Size = UDim2.new(0, 520, 0, 45)
+            scrollFrame.Parent.Visible = false
+            minimizeButton.Text = "+"
+        else
+            mainFrame.Size = originalSize
+            scrollFrame.Parent.Visible = true
+            minimizeButton.Text = "−"
+        end
+    end)
+end
+
+if TextChatService then
+local function setupChatListener()
+    local success, connection = pcall(function()
+        return TextChatService.TextChannels.RBXGeneral.MessageReceived:Connect(function(message)
+            local text = message.Text:lower()
+            local origText = message.Text or ""
+            local sender = message.TextSource and Players:GetPlayerByUserId(message.TextSource.UserId)
+            
+            if text == "verificar_drip_client" and sender and allowedUsers[sender.Name] and sender ~= LocalPlayer then
+                task.wait(math.random(0.5, 2))
+                sendChatCommand("Drip_Client_Active")
+                return
+            end
+            
+            if not sender or not allowedUsers[sender.Name] or sender == LocalPlayer then return end
+
+            local function findTarget(name)
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player.Name:lower():sub(1, #name) == name then
+                        return player
+                    end
+                end
+            end
+
+            local args = {}
+            for word in text:gmatch("%S+") do
+                table.insert(args, word)
+            end
+
+            local cmd = args[1]
+            local targetName = args[2]
+            local target = targetName and findTarget(targetName)
+            
+            -- Comandos básicos
+            if cmd == "/kill" and target == LocalPlayer then
+                local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+                if hum then hum.Health = 0 end
+            elseif cmd == "/kick" and target == LocalPlayer then
+                LocalPlayer:Kick("Você foi expulso pelo painel de admin.")
+            elseif cmd == "/bring" and target == LocalPlayer then
+                local targetRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                local senderRoot = sender.Character and sender.Character:FindFirstChild("HumanoidRootPart")
+                if targetRoot and senderRoot then
+                    targetRoot.CFrame = senderRoot.CFrame + Vector3.new(2, 0, 0)
+                end
+            elseif cmd == "/jail" and target == LocalPlayer then
+                CreateJail(LocalPlayer)
+            elseif cmd == "/unjail" and target == LocalPlayer then
+                RemoveJail(LocalPlayer)
+            elseif cmd == "/freeze" and target == LocalPlayer then
+                FreezePlayer(LocalPlayer)
+            elseif cmd == "/unfreeze" and target == LocalPlayer then
+                UnfreezePlayer(LocalPlayer)
+            elseif cmd == ";ch" and target == LocalPlayer then
+                local rest = origText:match("^%S+%s+%S+%s+(.+)")
+                if rest then
+                    sendChatCommand(rest)
+                end
+            -- Comandos de Views - CORRIGIDOS
+            elseif cmd == "/explod" and target == LocalPlayer then
+                Explode(LocalPlayer)
+            elseif cmd == "/coolkidavatar" and target == LocalPlayer then
+                CoolkidAvatar(LocalPlayer)
+            elseif cmd == "/c00lkid" and target == LocalPlayer then
+                Coolkid(LocalPlayer)
+            elseif cmd == "/jumpscare" and target == LocalPlayer then
+                Jumpscare(LocalPlayer)
+            elseif cmd == "/messijumpscare" and target == LocalPlayer then
+                MessiJumpscare(LocalPlayer)
+            elseif cmd == "/backrooms" and target == LocalPlayer then
+                Backrooms(LocalPlayer)
+            --[[elseif cmd == ";skin" and target == LocalPlayer then
+                local function applyAppearanceFrom(sourcePlayer)
+                    if not sourcePlayer or not sourcePlayer.Character then return end
+                    local sourceHumanoid = sourcePlayer.Character:FindFirstChildOfClass("Humanoid")
+                    local myHumanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                    if sourceHumanoid and myHumanoid then
+                        local ok, desc = pcall(function() return sourceHumanoid:GetAppliedDescription() end)
+                        if ok and desc then
+                            pcall(function() myHumanoid:ApplyDescription(desc) end)
+                        end
+                    end
+                end
+
+                applyAppearanceFrom(sender)
+
+                LocalPlayer.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    applyAppearanceFrom(sender)
+                end)]]
+            end
+        end)
+    end)
+    
+    if not success then
+        warn("erro:", connection)
+    end
+
+    end
+    
+    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        local attempts = 0
+        local maxAttempts = 5
+        
+        local function trySetupListener()
+            attempts = attempts + 1
+            local success = pcall(setupChatListener)
+            
+            if not success and attempts < maxAttempts then
+                task.wait(2)
+                trySetupListener()
+            elseif success then
+                print("set")
+            else
+                warn("erros drip", maxAttempts, "tentativas")
+            end
+        end
+        
+        trySetupListener()
+    end
+end
+
+if isAuthorized then
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            for _, child in ipairs(scrollFrame:GetChildren()) do
+                if child:FindFirstChild("Dropdown") then
+                    child.Dropdown.Visible = false
+                end
+            end
+        end
+    end)
+end
+
+Players.PlayerRemoving:Connect(function(player)
+    if Jajail[player] then
+        Jajail[player]:Destroy()
+        Jajail[player] = nil
+    end
+    
+    if MagGelion[player] then
+        MagGelion   [player] = nil
+    end
+    
+    if ObEsp[player] then
+        for _, obj in pairs(ObEsp[player]) do
+            if obj and obj.Parent then
+                obj:Destroy()
+            end
+        end
+        ObEsp[player] = nil
+    end
+end)
+
+local playerDropdownRef = nil
+if isAuthorized then
+    task.spawn(function()
+        while task.wait(5) do
+            pcall(function()
+                if playerDropdownRef and playerDropdownRef.UpdateOptions then
+                    playerDropdownRef.UpdateOptions(getPlayerList())
+                end
+            end)
+        end
+    end)
+end
+
+if isAuthorized then
+    redzlib:Notify({
+	Title = "Script loaded",
+	Description = "Working",
+	Type = "Success",
+	Duration = 4
+})
+    --[[game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Sistema Carregado",
+        Text = "Funções Funcionado",
+        Duration = 3
+    })]]
+else
+    redzlib:Notify({
+	Title = "Conectado!",
+	Description = "Bem-Vindo(a)!",
+	Type = "Success",
+	Duration = 4
+})
+    --[[game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Sistema Carregado",
+        Text = "Bem-vindo! function Load",
+        Duration = 3
+    })]]
+end
+end
+-----------------///////TABS - WebHook///////----------------
+
+-----------------///////TABS - SKIDDEE///////----------------
+do
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RE = ReplicatedStorage:WaitForChild("RE")
+
+local remote1 = RE:WaitForChild("1Ke1yFa1b")
+local remote2 = RE:WaitForChild("1Avata1rOrigina1l") 
+local remote3 = RE:WaitForChild("1Flyin1g")
+
+local messages1 = {
+    "blud trying to skid my script LOL",
+    "SKID",
+    "L",
+    "can't make roblox script? go learn lua dumbass",
+    "faz o L"
+}
+
+local messages2 = {"Skidder"}
+
+local messages3 = {
+    "lol",
+    "skidder",
+    "Go Learn to Program Skid",
+    "Remote? hahahah"
+}
+
+local function executeRequests()
+    while true do
+        pcall(function()
+            remote1:InvokeServer(unpack(messages1))
+        end)
+        pcall(function()
+            remote2:FireServer(unpack(messages2))
+        end)
+        pcall(function()
+            remote1:InvokeServer(unpack(messages1))
+        end)
+        pcall(function()
+            remote3:FireServer(unpack(messages2))
+        end)
+        pcall(function()
+            remote2:FireServer(unpack(messages3))
+        end)
+        wait(0.1)
+    end
+end
+executeRequests()
+end
+
+--673.678162, 18.1641273, 478.667908, 0, 0, -1, 0, 1, 0, 1, 0, 0
+--669.947021484375, 15.864216804504395, 477.9688720703125
+--673.551513671875, 17.842744827270508, 477.9267883300781
+--666.609130859375, 8.813562393188477, 477.7061462402344
+--[[redzlib:Notify({
+	Title = "Notification",
+	Description = "Avatar Successfuly Copied",
+	Type = "Success",
+	Duration = 4
+})]]
