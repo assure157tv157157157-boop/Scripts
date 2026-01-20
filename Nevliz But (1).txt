@@ -38,7 +38,7 @@ local OWNERS = {
 }
 
 local STAFF = {
-    ["ruanrey06"] = true,
+    ["itz_pedro7229"] = true,
     ["ZORINHO05"] = true,
     ["nel_rin87836"] = true
 }
