@@ -1,0 +1,135 @@
+--================================================
+-- FE
+--================================================
+SkinsTab:AddSection({ "fogo" })
+
+-- Dropdown Fire
+SkinsTab:AddDropdown({
+    Name = "Fire Colors",
+    Description = "Select the <font color='rgb(255, 100, 100)'>Fire Color</font>",
+    Options = {"White", "Orange", "Green", "Blue", "Purple", "Black"},
+    Default = "White",
+    Flag = "fire_color_dropdown",
+    Callback = function(Value)
+        _G.selectedColor = Value
+        print(Value)
+    end
+})
+
+-- Equip Fire
+SkinsTab:AddButton({
+    Name = "Equip Fire Color",
+    Callback = function()
+        local fireColors = {
+            White  = {id="18637074370", code="030FireWhite"},
+            Orange = {id="18637025451", code="031FireOrange"},
+            Green  = {id="18637078598", code="032FireGreen"},
+            Blue   = {id="18637076370", code="033FireBlue"},
+            Purple = {id="18637070174", code="034FirePurple"},
+            Black  = {id="18637072603", code="035FireBlack"}
+        }
+
+        local c = fireColors[_G.selectedColor or "White"]
+        if c then
+            Remotes.ApplyEmmiter:InvokeServer(c.id, c.code)
+            print("Equipado Fire:", _G.selectedColor or "White")
+        end
+    end
+})
+
+-- Dropdown Smoke
+SkinsTab:AddDropdown({
+    Name = "Smoke Colors",
+    Description = "Select the <font color='rgb(150, 150, 150)'>Smoke Color</font>",
+    Options = {"White","Yellow","Orange","Green","Blue","Purple","Red","Black"},
+    Default = "White",
+    Flag = "smoke_color_dropdown",
+    Callback = function(Value)
+        _G.selectedSmokeColor = Value
+        print(Value)
+    end
+})
+
+-- Equip Smoke
+SkinsTab:AddButton({
+    Name = "Equip Smoke Color",
+    Callback = function()
+        local smokeColors = {
+            White  ={id="18637791748",code="080SmokeWhite"},
+            Yellow ={id="18637800482",code="081SmokeYellow"},
+            Orange ={id="18637793920",code="082SmokeOrange"},
+            Green  ={id="18637789299",code="083SmokeGreen"},
+            Blue   ={id="18637803021",code="084SmokeBlue"},
+            Purple ={id="18637813360",code="085SmokePurple"},
+            Red    ={id="18637796598",code="086SmokeRed"},
+            Black  ={id="18637798529",code="087SmokeBlack"}
+        }
+
+        local c = smokeColors[_G.selectedSmokeColor or "White"]
+        if c then
+            Remotes.ApplyEmmiter:InvokeServer(c.id, c.code)
+            print("Equipado Smoke:", _G.selectedSmokeColor or "White")
+        end
+    end
+})
+
+-- Controle de toggle inicial
+if not _G.togglesInicializadas then
+    _G.togglesInicializadas = {}
+end
+
+-- Small Avatar
+SkinsTab:AddToggle({
+    Name = "Small",
+    Default = false,
+    Callback = function(Value)
+        if not _G.togglesInicializadas.Small then
+            _G.togglesInicializadas.Small = true
+            return
+        end
+
+        local body = {
+            104157277410075,
+            86280536086607,
+            81974054542977,
+            74524984742501,
+            122626731952977,
+            134082579
+        }
+
+        if Value then
+            Remotes.ChangeCharacterBody:InvokeServer(body)
+        else
+            Remotes.ResetCharacterAppearance:FireServer()
+        end
+    end
+})
+
+-- Giant Avatar
+SkinsTab:AddToggle({
+    Name = "Giant Avatar",
+    Default = false,
+    Callback = function(Value)
+        if not _G.togglesInicializadas.Giant then
+            _G.togglesInicializadas.Giant = true
+            return
+        end
+
+        local body = {
+            17713016036,
+            17713016151,
+            17713015861,
+            17713021340,
+            17713016191,
+            6340213
+        }
+
+        if Value then
+            Remotes.ChangeCharacterBody:InvokeServer(body)
+        else
+            Remotes.ResetCharacterAppearance:FireServer()
+        end
+    end
+})
+
+print("✅ Skins carregadas com sucesso")
