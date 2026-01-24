@@ -1,0 +1,135 @@
+--////////////////////////////////////////////////////
+--// ABA VEÍCULOS
+local CarTab = Window:MakeTab({
+    Title = "car",
+    Icon = "rbxassetid://111211548032129"
+})
+
+----------------------------------------------------------------
+-- SEU SCRIPT (COMPLETO, SEM ALTERAÇÃO DE LÓGICA)
+----------------------------------------------------------------
+
+CarTab:AddSection({ "Speed Car & Turbo" })
+
+local speedValue = 200
+local turboValue = 11.3
+
+-- Função para encontrar todos os carros no workspace
+local function getAllCars()
+    local cars = {}
+    if workspace.Vehicles then
+        for _, vehicle in pairs(workspace.Vehicles:GetChildren()) do
+            if vehicle:FindFirstChild("Seats") and vehicle.Seats:FindFirstChild("VehicleSeat") then
+                table.insert(cars, vehicle)
+            end
+        end
+    end
+    return cars
+end
+
+-- Função para aplicar valores em todos os carros
+local function applyToAllCars(valueType, value)
+    local cars = getAllCars()
+    local carsModified = 0
+    
+    if #cars == 0 then
+        print(" No cars found in workspace.Vehicles!")
+        return
+    end
+    
+    for _, vehicle in pairs(cars) do
+        local vehicleSeat = vehicle.Seats.VehicleSeat
+        print(" Checking car: " .. vehicle.Name)
+        
+        print(" Objects in the VehicleSeat:")
+        for _, child in pairs(vehicleSeat:GetChildren()) do
+            print("  - " .. child.Name .. " (" .. child.ClassName .. ")")
+        end
+        
+        local targetObj = vehicleSeat:FindFirstChild(valueType)
+        
+        if targetObj then
+            print(" It found " .. valueType .. " (" .. targetObj.ClassName .. ")")
+            
+            if targetObj:IsA("NumberValue") then
+                targetObj.Value = value
+                carsModified += 1
+            elseif targetObj:IsA("IntValue") then
+                targetObj.Value = value
+                carsModified += 1
+            elseif targetObj:IsA("StringValue") then
+                targetObj.Value = tostring(value)
+                carsModified += 1
+            else
+                pcall(function()
+                    targetObj.Value = value
+                    carsModified += 1
+                end)
+            end
+        else
+            local success = pcall(function()
+                if valueType == "MaxSpeed" then
+                    vehicleSeat.MaxSpeed = value
+                elseif valueType == "Turbo" then
+                    vehicleSeat.Turbo = value
+                end
+                carsModified += 1
+            end)
+            if not success then
+                print(" Failed to change " .. valueType)
+            end
+        end
+    end
+    
+    print(" Total number of modified cars: " .. carsModified)
+end
+
+-- TextBox Velocidade
+CarTab:AddTextBox({
+    Name = "MaxSpeed",
+    Description = "Enter the maximum speed value.",
+    PlaceholderText = "200",
+    Callback = function(Value)
+        local numValue = tonumber(Value)
+        if numValue then
+            speedValue = numValue
+            print(" Speed set to: " .. speedValue)
+        end
+    end
+})
+
+-- TextBox Turbo
+CarTab:AddTextBox({
+    Name = "Turbo Power",
+    Description = "Enter the turbo value.",
+    PlaceholderText = "11.3",
+    Callback = function(Value)
+        local numValue = tonumber(Value)
+        if numValue then
+            turboValue = numValue
+            print(" Turbo set to: " .. turboValue)
+        end
+    end
+})
+
+-- Apply Speed
+CarTab:AddButton({
+    Name = "Apply Speed",
+    Description = "Applies the speed to all cars.",
+    Callback = function()
+        print(" Applying speed " .. speedValue .. " in all cars...")
+        applyToAllCars("MaxSpeed", speedValue)
+    end
+})
+
+-- Apply Turbo
+CarTab:AddButton({
+    Name = "Apply Turbo",
+    Description = "It applies the turbo to all cars.",
+    Callback = function()
+        print(" Applying turbo " .. turboValue .. " in all cars...")
+        applyToAllCars("Turbo", turboValue)
+    end
+})
+
+print(" Script carregado")
